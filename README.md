@@ -15,7 +15,7 @@ A student-focused mobile application built for Nirma University students.
 - **Timetable & Academic Calendar** — Daily classes, exams, holidays and academic events.
 - **University Updates** — Important academic announcements and updates.
 - **Student Services** — Lost & Found, Peer-to-Peer listings and coding leaderboards.
-- **Academic Tools** — SGPA calculator, semester progress and student utilities.
+- **Academic Tools** — semester progress and student utilities.
 - **Global Search** — Quickly find academic resources and content.
 
 ## Screenshots
