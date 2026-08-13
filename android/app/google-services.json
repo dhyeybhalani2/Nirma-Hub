@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "971535966128",
+    "project_id": "nirmahub",
+    "storage_bucket": "nirmahub.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:971535966128:android:0b9f51beaf38b063d34075",
+        "android_client_info": {
+          "package_name": "com.ewrone.nirmahub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdZxnGvrIxaIKdxpuZF_GEFUpT998n3ZM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

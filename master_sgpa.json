@@ -1,0 +1,309 @@
+{
+    "1st Year": {
+        "Common": {
+            "1": [
+                {
+                    "subject": "Environmental Science",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                },
+                {
+                    "subject": "Maths I",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                },
+                {
+                    "subject": "Physics",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                },
+                {
+                    "subject": "Electrical Science",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                },
+                {
+                    "subject": "Computer Programming",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                },
+                {
+                    "subject": "General English",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                }
+            ],
+            "2": [
+                {
+                    "subject": "Maths-1",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                },
+                {
+                    "subject": "Written Communication",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                },
+                {
+                    "subject": "Contemporary India",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                },
+                {
+                    "subject": "Statistics",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                },
+                {
+                    "subject": "Web Programming/Chemistry",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                },
+                {
+                    "subject": "Computer Programming/AIML",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                },
+                {
+                    "subject": "EGD",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 40
+                        },
+                        {
+                            "label": "Lab Manual",
+                            "maxMarks": 100
+                        },
+                        {
+                            "label": "LPW",
+                            "maxMarks": 40
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "2nd Year": {
+        "BCE": {
+            "3": [
+                {
+                    "subject": "Placeholder BCE Sem 3 Subject",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                }
+            ],
+            "4": [
+                {
+                    "subject": "Placeholder BCE Sem 4 Subject",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                }
+            ]
+        },
+        "CSE": {
+            "3": [
+                {
+                    "subject": "Placeholder CSE Sem 3 Subject",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                }
+            ],
+            "4": [
+                {
+                    "subject": "Placeholder CSE Sem 4 Subject",
+                    "components": [
+                        {
+                            "label": "Sessional",
+                            "maxMarks": 50
+                        },
+                        {
+                            "label": "Assignment",
+                            "maxMarks": 50
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
