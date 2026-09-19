@@ -63,3 +63,8 @@ leetcode_rating_test.json
 admin_panel/
 Nirma_Hub_Website/
 node_modules/
+# Supabase CLI local state (contains project ref, pooler URL, owner email)
+supabase/.temp/
+
+# Local analysis artifacts
+nirma-hub-analysis.html

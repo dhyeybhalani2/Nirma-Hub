@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 
 class GridSkeleton extends StatefulWidget {
   const GridSkeleton({super.key});
@@ -478,7 +479,7 @@ class _UniversityUpdatesSkeletonState extends State<UniversityUpdatesSkeleton> w
                     Container(
                       height: 56,
                       decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
+                        color: context.c.fill,
                         borderRadius: BorderRadius.only(
                           bottomLeft: Radius.circular(24),
                           bottomRight: Radius.circular(24),

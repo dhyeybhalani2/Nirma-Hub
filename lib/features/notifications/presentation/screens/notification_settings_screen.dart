@@ -8,10 +8,8 @@ import '../../../../services/notification_service.dart';
 import '../../../timetable/presentation/providers/timetable_provider.dart';
 import '../../../../widgets/premium_touch_button.dart';
 
-import '../../../../services/ad_service.dart';
-import '../../../../widgets/ad_banner_widget.dart';
-import '../../../../widgets/ad_native_widget.dart';
 import '../../../../widgets/skeleton_loaders.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -21,19 +19,14 @@ class NotificationSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationSettingsScreenState extends ConsumerState<NotificationSettingsScreen> {
-  final Color nirmaRed = const Color(0xFFC62828);
-  final Color baseNavy = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFE2E8F0);
-  final Color bgSurface = const Color(0xFFF1F4F9);
+  Color get nirmaRed => context.c.accent;
+  Color get baseNavy => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.border;
+  Color get bgSurface => context.c.bg;
 
   TimetableNotificationSettings _settings = TimetableNotificationSettings.defaultSettings();
   bool _isLoading = true;
-  TimetablePassStatus _passStatus = const TimetablePassStatus(
-    isAdRequired: false,
-    isUnlocked: true,
-    remainingText: '',
-  );
 
   @override
   void initState() {
@@ -43,30 +36,13 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
 
   Future<void> _loadSettings() async {
     final loaded = await TimetableNotificationSettings.loadFromPrefs();
-    final passStatus = await AdService.getTimetablePassStatus();
-
-    final isAdRequired = passStatus.isAdRequired;
-    final isUnlocked = passStatus.isUnlocked;
-    final effectiveActive = loaded.isEnabled && (!isAdRequired || isUnlocked);
 
     if (mounted) {
       setState(() {
         _settings = loaded;
-        _passStatus = passStatus;
         _isLoading = false;
       });
-
-      // If ad pass is required and expired, automatically show the rewarded ad unlock modal on open
-      if (isAdRequired && !isUnlocked) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _showRewardedUnlockModal();
-          }
-        });
-      }
     }
-
-    AdService.syncUserNotificationPassStatus(isEnabled: effectiveActive);
   }
 
   Future<void> _updateSettings(TimetableNotificationSettings newSettings) async {
@@ -86,12 +62,6 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
     // Automatically apply to timetable
     final timetable = ref.read(timetableProvider);
     await NotificationService().scheduleTimetableNotifications(timetable, customSettings: newSettings);
-
-    final isAdRequired = _passStatus.isAdRequired;
-    final isUnlocked = _passStatus.isUnlocked;
-    final effectiveActive = newSettings.isEnabled && (!isAdRequired || isUnlocked);
-
-    AdService.syncUserNotificationPassStatus(isEnabled: effectiveActive);
   }
 
   @override
@@ -144,84 +114,48 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
       ),
       body: _isLoading
           ? const NotificationSettingsSkeleton()
-          : () {
-              final isEnabled = _settings.isEnabled;
-              final isAdRequired = _passStatus.isAdRequired;
-              final isUnlocked = _passStatus.isUnlocked;
-              final effectiveActive = isEnabled && (!isAdRequired || isUnlocked);
+          : RefreshIndicator(
+              onRefresh: _loadSettings,
+              color: nirmaRed,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                children: [
+                  // --- Master Switch Card ---
+                  _buildMasterToggleCard(),
+                  const SizedBox(height: 20),
 
-              return RefreshIndicator(
-                onRefresh: _loadSettings,
-                color: nirmaRed,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                  children: [
-                    // --- Master Switch Card ---
-                    _buildMasterToggleCard(),
-                    const SizedBox(height: 20),
+                  if (!_settings.isEnabled) ...[
+                    _buildDisabledBanner(),
+                    const SizedBox(height: 24),
+                  ] else ...[
+                    // --- First Class Settings Card ---
+                    _buildSectionHeader('FIRST CLASS OF THE DAY'),
+                    const SizedBox(height: 12),
+                    _buildFirstClassCard(),
+                    const SizedBox(height: 24),
 
-                    // 🎨 Native Ad below Notification Reminder On/Off Section
-                    const AdNativeCard(
-                      placementKey: 'notifications_below_reminders',
-                      isMediumTemplate: true,
-                      margin: EdgeInsets.only(bottom: 20),
-                    ),
+                    // --- Subsequent Classes Settings Card ---
+                    _buildSectionHeader('NEXT / SUBSEQUENT CLASSES'),
+                    const SizedBox(height: 12),
+                    _buildSubsequentClassCard(),
+                    const SizedBox(height: 24),
 
-                    if (!effectiveActive) ...[
-                      _buildDisabledBanner(),
-                      const SizedBox(height: 24),
-                      if (isAdRequired && !isUnlocked) ...[
-                        Center(
-                          child: TextButton.icon(
-                            onPressed: _showRewardedUnlockModal,
-                            icon: const Icon(Icons.play_circle_fill_rounded, color: Color(0xFFDC2626), size: 22),
-                            label: const Text(
-                              'Watch Video to Activate Notifications',
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFFDC2626),
-                                fontFamily: 'Manrope',
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ] else ...[
-                      // --- First Class Settings Card ---
-                      _buildSectionHeader('FIRST CLASS OF THE DAY'),
-                      const SizedBox(height: 12),
-                      _buildFirstClassCard(),
-                      const SizedBox(height: 24),
+                    // --- Alert & Vibration Card ---
+                    _buildSectionHeader('ALERT PREFERENCES'),
+                    const SizedBox(height: 12),
+                    _buildAlertPreferencesCard(),
+                    const SizedBox(height: 28),
 
-                      // --- Subsequent Classes Settings Card ---
-                      _buildSectionHeader('NEXT / SUBSEQUENT CLASSES'),
-                      const SizedBox(height: 12),
-                      _buildSubsequentClassCard(),
-                      const SizedBox(height: 24),
-
-                      // --- Alert & Vibration Card ---
-                      _buildSectionHeader('ALERT PREFERENCES'),
-                      const SizedBox(height: 12),
-                      _buildAlertPreferencesCard(),
-                      const SizedBox(height: 28),
-
-                      // --- Action Buttons ---
-                      _buildTestNotificationButton(),
-                      const SizedBox(height: 12),
-                      _buildResetDefaultsButton(),
-                      const SizedBox(height: 24),
-
-                      // --- Clean Banner Ad ---
-                      const Center(child: AdBannerWidget(placementKey: 'notification_settings')),
-                      const SizedBox(height: 40),
-                    ],
+                    // --- Action Buttons ---
+                    _buildTestNotificationButton(),
+                    const SizedBox(height: 12),
+                    _buildResetDefaultsButton(),
+                    const SizedBox(height: 40),
                   ],
-                ),
-              );
-            }(),
+                ],
+              ),
+            ),
     );
   }
 
@@ -243,16 +177,13 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
 
   Widget _buildMasterToggleCard() {
     final isEnabled = _settings.isEnabled;
-    final isAdRequired = _passStatus.isAdRequired;
-    final isUnlocked = _passStatus.isUnlocked;
-    final effectiveActive = isEnabled && (!isAdRequired || isUnlocked);
 
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: effectiveActive 
+          color: isEnabled 
               ? const Color(0xFF10B981).withValues(alpha: 0.3) 
               : borderGray,
         ),
@@ -265,360 +196,118 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
         ],
       ),
       padding: const EdgeInsets.all(16),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: effectiveActive
-                      ? nirmaRed.withValues(alpha: 0.1)
-                      : borderGray.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  effectiveActive ? Icons.notifications_active_rounded : Icons.notifications_off_outlined,
-                  color: effectiveActive ? nirmaRed : textGray,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isEnabled
+                  ? nirmaRed.withValues(alpha: 0.1)
+                  : borderGray.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              isEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_outlined,
+              color: isEnabled ? nirmaRed : textGray,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 4,
                   children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        Text(
-                          'Timetable Reminders',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: baseNavy,
-                            fontFamily: 'Manrope',
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                          decoration: BoxDecoration(
-                            color: effectiveActive
-                                ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                                : (isAdRequired && !isUnlocked
-                                    ? const Color(0xFFEF4444).withValues(alpha: 0.15)
-                                    : textGray.withValues(alpha: 0.15)),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            effectiveActive 
-                                ? (isAdRequired && isUnlocked && _passStatus.remainingText.isNotEmpty 
-                                    ? '⚡ ${_passStatus.remainingText}' 
-                                    : 'ACTIVE') 
-                                : (isAdRequired && !isUnlocked ? '⏳ EXPIRED' : '🔕 OFF'),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: effectiveActive 
-                                  ? const Color(0xFF059669) 
-                                  : (isAdRequired && !isUnlocked ? const Color(0xFFDC2626) : textGray),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
                     Text(
-                      effectiveActive
-                          ? 'Timetable class alerts enabled'
-                          : (isAdRequired && !isUnlocked
-                              ? 'Pass expired. Watch video to activate'
-                              : 'All timetable reminders are paused'),
+                      'Timetable Reminders',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: effectiveActive ? const Color(0xFF059669) : (isAdRequired && !isUnlocked ? const Color(0xFFDC2626) : textGray),
-                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: baseNavy,
+                        fontFamily: 'Manrope',
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: isEnabled
+                            ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                            : textGray.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        isEnabled ? 'ACTIVE' : '🔕 OFF',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: isEnabled 
+                              ? context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)) 
+                              : textGray,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              CupertinoSwitch(
-                value: effectiveActive,
-                activeTrackColor: nirmaRed,
-                onChanged: (val) async {
-                  HapticFeedback.selectionClick();
-                  if (!val) {
-                    await _updateSettings(_settings.copyWith(isEnabled: false));
-                  } else {
-                    if (!isAdRequired) {
-                      await _updateSettings(_settings.copyWith(isEnabled: true));
-                    } else {
-                      final status = await AdService.getTimetablePassStatus();
-                      setState(() => _passStatus = status);
-                      if (status.isUnlocked) {
-                        await _updateSettings(_settings.copyWith(isEnabled: true));
-                      } else {
-                        _showRewardedUnlockModal();
-                      }
-                    }
-                  }
-                },
-              ),
-            ],
+                const SizedBox(height: 3),
+                Text(
+                  isEnabled
+                      ? 'Timetable class alerts enabled'
+                      : 'All timetable reminders are paused',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isEnabled ? context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)) : textGray,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          CupertinoSwitch(
+            value: isEnabled,
+            activeTrackColor: nirmaRed,
+            onChanged: (val) async {
+              HapticFeedback.selectionClick();
+              await _updateSettings(_settings.copyWith(isEnabled: val));
+            },
           ),
         ],
       ),
     );
   }
 
-  void _showRewardedUnlockModal() {
-    final passDays = AdService().timetablePassDays > 0 ? AdService().timetablePassDays : 3;
-    final passHours = passDays * 24;
-    final dayLabel = passDays == 1 ? 'Day' : 'Days';
-    final dayLabelLower = passDays == 1 ? 'day' : 'days';
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(28),
-            topRight: Radius.circular(28),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 25,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Drag handle
-            Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Icon Badge
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFDC2626), Color(0xFFF97316)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFDC2626).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 30),
-            ),
-            const SizedBox(height: 16),
-
-            // Title
-            Text(
-              'Unlock $passDays $dayLabel of Lecture Alerts',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: Theme.of(context).colorScheme.onSurface,
-                letterSpacing: -0.4,
-                fontFamily: 'Manrope',
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Description
-            Text(
-              'Watch a quick 15-second sponsor video to activate all automatic timetable reminders and class notifications for $passDays full $dayLabelLower.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.5,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.45,
-                fontFamily: 'Inter',
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Benefits List
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-              ),
-              child: Column(
-                children: [
-                  _buildBenefitRow('🔔 Smart first class of day reminder'),
-                  const SizedBox(height: 8),
-                  _buildBenefitRow('📚 Next class alerts before every lecture'),
-                  const SizedBox(height: 8),
-                  _buildBenefitRow('⚡ 100% automatic for the next $passHours hours'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Watch Video Button
-            PremiumTouchButton(
-              onTap: () async {
-                Navigator.pop(ctx);
-                await AdService().showRewardedAd(
-                  context: context,
-                  onRewardEarned: () async {
-                    await AdService.grantTimetable3DayUnlock();
-                    await _updateSettings(_settings.copyWith(isEnabled: true));
-                    await _loadSettings();
-
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-                              const SizedBox(width: 10),
-                              Text(
-                                "🎉 $passDays-Day Notification Pass Activated!",
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontFamily: 'Manrope'),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: const Color(0xFF059669),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                    }
-                  },
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFDC2626).withValues(alpha: 0.35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Watch Video & Unlock ($passDays $dayLabel)',
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        fontFamily: 'Manrope',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBenefitRow(String text) {
-    return Row(
-      children: [
-        const Icon(Icons.check_circle_outline_rounded, size: 16, color: Color(0xFF10B981)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
-              fontFamily: 'Manrope',
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildDisabledBanner() {
-    final isAdRequired = _passStatus.isAdRequired;
-    final isUnlocked = _passStatus.isUnlocked;
-    final isExpired = isAdRequired && !isUnlocked;
-    final passDays = AdService().timetablePassDays > 0 ? AdService().timetablePassDays : 3;
-    final dayLabelLower = passDays == 1 ? 'day' : 'days';
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isExpired
-            ? const Color(0xFFFEF2F2)
-            : const Color(0xFFF59E0B).withValues(alpha: 0.1),
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isExpired
-              ? const Color(0xFFFECACA)
-              : const Color(0xFFF59E0B).withValues(alpha: 0.3),
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         children: [
           Icon(
-            isExpired ? Icons.alarm_off_rounded : Icons.info_outline_rounded,
-            color: isExpired ? const Color(0xFFDC2626) : const Color(0xFFD97706),
+            Icons.info_outline_rounded,
+            color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)),
             size: 22,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              isExpired
-                  ? 'Notification Pass is expired. Turn the switch ON above or tap below to unlock $passDays $dayLabelLower of class reminders with a quick video.'
-                  : 'Timetable reminders are turned off. Turn the switch ON above to set custom reminder times and activate alerts.',
+              'Timetable reminders are turned off. Turn the switch ON above to set custom reminder times and activate alerts.',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isExpired ? const Color(0xFF991B1B) : const Color(0xFF92400E),
+                color: context.c.pick(const Color(0xFF92400E), const Color(0xFFFCD34D)),
                 fontFamily: 'Inter',
                 height: 1.4,
               ),
@@ -1075,7 +764,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                   ),
                 ],
               ),
-              backgroundColor: baseNavy,
+              backgroundColor: context.c.hero,
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 3),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1121,7 +810,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Reset to default notification settings.'),
-                backgroundColor: baseNavy,
+                backgroundColor: context.c.hero,
                 behavior: SnackBarBehavior.floating,
                 duration: const Duration(seconds: 2),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

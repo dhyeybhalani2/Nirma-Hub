@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
-import 'widgets/ad_banner_widget.dart';
+import 'core/theme/app_theme.dart';
 
 class HelpCenterScreen extends ConsumerStatefulWidget {
   const HelpCenterScreen({super.key});
@@ -13,12 +13,12 @@ class HelpCenterScreen extends ConsumerStatefulWidget {
 }
 
 class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
-  final Color nirmaNavy = const Color(0xFF1A2B48);
-  final Color nirmaRed = const Color(0xFFC62828);
-  final Color textDark = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFCBD5E1);
-  final Color scaffoldBg = const Color(0xFFF1F4F9);
+  Color get nirmaNavy => context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0));
+  Color get nirmaRed => context.c.accent;
+  Color get textDark => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.borderStrong;
+  Color get scaffoldBg => context.c.bg;
 
   final List<Map<String, String>> faqs = [
     {
@@ -132,7 +132,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: nirmaNavy,
+                  color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -152,7 +152,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                       ),
                       child: Icon(
                         Icons.support_agent_rounded,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                         size: 32,
                       ),
                     ),
@@ -160,7 +160,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                     Text(
                       'How can we help you?',
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Manrope',
@@ -171,7 +171,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                       'It looks like you are experiencing problems with our app. We are here to help so please get in touch with us',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 14,
                         fontFamily: 'Manrope',
                         height: 1.5,
@@ -239,14 +239,6 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
               // FAQs
               ...faqs.map((faq) => _buildFaqItem(faq['question']!, faq['answer']!)),
               const SizedBox(height: 24),
-
-              // Bottom Clean Banner Ad
-              const Center(
-                child: AdBannerWidget(
-                  placementKey: 'help_center',
-                  margin: EdgeInsets.only(bottom: 16),
-                ),
-              ),
             ],
           ),
         ),
@@ -483,7 +475,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                     SizedBox(height: 24),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: nirmaRed,
+                        backgroundColor: context.c.accentFill,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -501,7 +493,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                                   SnackBar(
                                     content: Row(
                                       children: [
-                                        Icon(Icons.error_outline, color: Theme.of(context).colorScheme.surface),
+                                        Icon(Icons.error_outline, color: Colors.white),
                                         SizedBox(width: 12),
                                         Expanded(
                                           child: Text(
@@ -511,7 +503,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                                         ),
                                       ],
                                     ),
-                                    backgroundColor: nirmaRed,
+                                    backgroundColor: context.c.accentFill,
                                     behavior: SnackBarBehavior.floating,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                     margin: const EdgeInsets.all(16),
@@ -541,7 +533,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                                     SnackBar(
                                       content: Row(
                                         children: [
-                                          Icon(Icons.check_circle_outline, color: Theme.of(context).colorScheme.surface),
+                                          Icon(Icons.check_circle_outline, color: Colors.white),
                                           SizedBox(width: 12),
                                           Expanded(
                                             child: Text(
@@ -551,7 +543,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                                           ),
                                         ],
                                       ),
-                                      backgroundColor: nirmaNavy,
+                                      backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       margin: const EdgeInsets.all(16),
@@ -564,7 +556,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                                     SnackBar(
                                       content: Row(
                                         children: [
-                                          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.surface),
+                                          Icon(Icons.error_outline, color: Colors.white),
                                           SizedBox(width: 12),
                                           Expanded(
                                             child: Text(
@@ -574,7 +566,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                                           ),
                                         ],
                                       ),
-                                      backgroundColor: nirmaRed,
+                                      backgroundColor: context.c.accentFill,
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       margin: const EdgeInsets.all(16),
@@ -589,7 +581,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                           ? SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2),
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
                           : Text(
                               'Submit',

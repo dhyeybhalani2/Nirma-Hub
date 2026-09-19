@@ -19,9 +19,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'widgets/contribution_bottom_sheet.dart';
 import 'widgets/premium_touch_button.dart';
-import 'widgets/ad_banner_widget.dart';
-import 'widgets/ad_native_widget.dart';
-import 'services/ad_service.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,7 +34,7 @@ class MyApp extends StatelessWidget {
       title: 'Nirma Hub - Notes',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF1F4F9),
+        scaffoldBackgroundColor: context.c.bg,
         fontFamily: 'Manrope',
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFC62828)),
         useMaterial3: true,
@@ -80,9 +78,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   Color _getColorForSubject(String name) {
     final hash = name.hashCode.abs();
+    if (context.c.isDark) return _getIconColorForSubject(name).withValues(alpha: 0.16);
     final colors = [
       const Color(0xFFE8F5E9), const Color(0xFFE3F2FD), const Color(0xFFF3E5F5),
-      const Color(0xFFFFF3E0), const Color(0xFFFFF8E1), const Color(0xFFE0F7FA),
+      context.c.warningSoft, context.c.warningSoft, const Color(0xFFE0F7FA),
       const Color(0xFFFCE4EC), const Color(0xFFE8EAF6), const Color(0xFFFBE9E7)
     ];
     return colors[hash % colors.length];
@@ -95,7 +94,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       const Color(0xFFF57C00), const Color(0xFFFBC02D), const Color(0xFF0097A7),
       const Color(0xFFC2185B), const Color(0xFF3F51B5), const Color(0xFFD84315)
     ];
-    return colors[hash % colors.length];
+    return context.c.tint(colors[hash % colors.length]);
   }
 
   String _currentBranch = "";
@@ -271,7 +270,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                              color: context.c.shadow.withValues(alpha: 0.02),
                               blurRadius: 10,
                               offset: const Offset(0, 6),
                             ),
@@ -346,7 +345,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                                       ],
                                     ),
                                   ),
-                                  Icon(CupertinoIcons.chevron_forward, color: Color(0xFFCBD5E1), size: 20),
+                                  Icon(CupertinoIcons.chevron_forward, color: context.c.borderStrong, size: 20),
                                 ],
                               ),
                             ),
@@ -356,20 +355,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                     ),
                   );
 
-                  final interval = AdService().nativeAdInterval;
-                  if ((index + 1) % interval == 0 && index != filteredSubjects.length - 1) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        subjectCard,
-                        const AdNativeCard(
-                          placementKey: 'subjects_in_between',
-                          isMediumTemplate: false,
-                          margin: EdgeInsets.only(bottom: 12),
-                        ),
-                      ],
-                    );
-                  }
                   return subjectCard;
                 },
                 childCount: filteredSubjects.length,
@@ -390,7 +375,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         });
       },
       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, fontFamily: 'Manrope'),
-      cursorColor: const Color(0xFFC62828),
+      cursorColor: context.c.accent,
       decoration: InputDecoration(
         hintText: 'Search subjects or codes...',
         hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 15),
@@ -399,7 +384,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           child: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.c.card,
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
@@ -447,25 +432,25 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
     
     // Legacy mapping and standard types
     if (lower == "ppts" || lower == "ppt") {
-      return {"title": "PPTs", "folder_type": folderType, "icon": Icons.slideshow_rounded, "color": const Color(0xFFEA580C).withValues(alpha: 0.08), "iconColor": const Color(0xFFEA580C), "desc": "Lecture presentations"};
+      return {"title": "PPTs", "folder_type": folderType, "icon": Icons.slideshow_rounded, "color": context.c.tint(const Color(0xFFEA580C)).withValues(alpha: 0.08), "iconColor": context.c.tint(const Color(0xFFEA580C)), "desc": "Lecture presentations"};
     }
     if (lower == "notes" || lower == "handwritten_notes" || lower == "handwritten notes") {
-      return {"title": "Handwritten Notes", "folder_type": folderType, "icon": Icons.edit_note_rounded, "color": const Color(0xFF2563EB).withValues(alpha: 0.08), "iconColor": const Color(0xFF2563EB), "desc": "Notes by students"};
+      return {"title": "Handwritten Notes", "folder_type": folderType, "icon": Icons.edit_note_rounded, "color": context.c.tint(const Color(0xFF2563EB)).withValues(alpha: 0.08), "iconColor": context.c.tint(const Color(0xFF2563EB)), "desc": "Notes by students"};
     }
     if (lower == "practicals" || lower == "practical") {
-      return {"title": "Practicals", "folder_type": folderType, "icon": Icons.science_rounded, "color": const Color(0xFF059669).withValues(alpha: 0.08), "iconColor": const Color(0xFF059669), "desc": "Lab manuals & assignments"};
+      return {"title": "Practicals", "folder_type": folderType, "icon": Icons.science_rounded, "color": context.c.tint(const Color(0xFF059669)).withValues(alpha: 0.08), "iconColor": context.c.tint(const Color(0xFF059669)), "desc": "Lab manuals & assignments"};
     }
     if (lower == "course_policy" || lower == "course policy" || lower == "policy") {
-      return {"title": "Course Policy", "folder_type": folderType, "icon": Icons.policy_rounded, "color": const Color(0xFF7C3AED).withValues(alpha: 0.08), "iconColor": const Color(0xFF7C3AED), "desc": "Syllabus and grading"};
+      return {"title": "Course Policy", "folder_type": folderType, "icon": Icons.policy_rounded, "color": context.c.tint(const Color(0xFF7C3AED)).withValues(alpha: 0.08), "iconColor": context.c.tint(const Color(0xFF7C3AED)), "desc": "Syllabus and grading"};
     }
     if (lower.contains("assignment")) {
-      return {"title": folderType, "folder_type": folderType, "icon": Icons.assignment_rounded, "color": const Color(0xFFD97706).withValues(alpha: 0.08), "iconColor": const Color(0xFFD97706), "desc": "Course assignments"};
+      return {"title": folderType, "folder_type": folderType, "icon": Icons.assignment_rounded, "color": context.c.tint(const Color(0xFFD97706)).withValues(alpha: 0.08), "iconColor": context.c.tint(const Color(0xFFD97706)), "desc": "Course assignments"};
     }
     if (lower.contains("paper") || lower.contains("exam")) {
-      return {"title": folderType, "folder_type": folderType, "icon": Icons.text_snippet_rounded, "color": const Color(0xFFC62828).withValues(alpha: 0.08), "iconColor": const Color(0xFFC62828), "desc": "Previous year papers"};
+      return {"title": folderType, "folder_type": folderType, "icon": Icons.text_snippet_rounded, "color": context.c.accent.withValues(alpha: 0.08), "iconColor": context.c.accent, "desc": "Previous year papers"};
     }
     if (lower.contains("book") || lower.contains("reference")) {
-      return {"title": folderType, "folder_type": folderType, "icon": Icons.library_books_rounded, "color": const Color(0xFF0891B2).withValues(alpha: 0.08), "iconColor": const Color(0xFF0891B2), "desc": "Reference materials"};
+      return {"title": folderType, "folder_type": folderType, "icon": Icons.library_books_rounded, "color": context.c.tint(const Color(0xFF0891B2)).withValues(alpha: 0.08), "iconColor": context.c.tint(const Color(0xFF0891B2)), "desc": "Reference materials"};
     }
 
     // Default dynamic style for completely custom categories
@@ -473,8 +458,8 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
       "title": folderType,
       "folder_type": folderType,
       "icon": Icons.folder_rounded,
-      "color": const Color(0xFFC62828).withValues(alpha: 0.08),
-      "iconColor": const Color(0xFFC62828),
+      "color": context.c.accent.withValues(alpha: 0.08),
+      "iconColor": context.c.accent,
       "desc": "Subject materials"
     };
   }
@@ -600,7 +585,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                                color: context.c.shadow.withValues(alpha: 0.02),
                                 blurRadius: 10,
                                 offset: const Offset(0, 6),
                               ),
@@ -676,7 +661,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                                         ],
                                       ),
                                     ),
-                                    Icon(CupertinoIcons.chevron_forward, color: Color(0xFFCBD5E1), size: 20),
+                                    Icon(CupertinoIcons.chevron_forward, color: context.c.borderStrong, size: 20),
                                   ],
                                 ),
                               ),
@@ -686,20 +671,6 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                       ),
                     );
 
-                    final interval = AdService().nativeAdInterval;
-                    if ((index + 1) % interval == 0 && index != _categories.length - 1) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          folderCard,
-                          const AdNativeCard(
-                            placementKey: 'notes_folders_in_between',
-                            isMediumTemplate: false,
-                            margin: EdgeInsets.only(bottom: 12),
-                          ),
-                        ],
-                      );
-                    }
                     return folderCard;
                   },
                 ),
@@ -854,7 +825,7 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
               ),
             ],
           ),
-          backgroundColor: isPinned ? const Color(0xFF475569) : const Color(0xFFD97706),
+          backgroundColor: isPinned ? context.c.textSecondary : const Color(0xFFD97706),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 2),
@@ -929,19 +900,19 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
     final name = fileName.toLowerCase();
     final folder = folderType.toLowerCase();
     if (folder.contains('ppt') || name.endsWith('.ppt') || name.endsWith('.pptx')) {
-      return const Color(0xFFEA580C); // Warm Orange for PPTs
+      return context.c.tint(const Color(0xFFEA580C)); // Warm Orange for PPTs
     }
     if (folder.contains('practical') || folder.contains('lab') || folder.contains('code')) {
-      return const Color(0xFF059669); // Emerald Green for Practicals
+      return context.c.tint(const Color(0xFF059669)); // Emerald Green for Practicals
     }
     if (folder.contains('note') || folder.contains('handwritten')) {
-      return const Color(0xFF2563EB); // Royal Blue for Handwritten Notes
+      return context.c.tint(const Color(0xFF2563EB)); // Royal Blue for Handwritten Notes
     }
     if (folder.contains('policy') || folder.contains('syllabus')) {
-      return const Color(0xFF7C3AED); // Vibrant Purple for Course Policy
+      return context.c.tint(const Color(0xFF7C3AED)); // Vibrant Purple for Course Policy
     }
     if (folder.contains('assignment')) {
-      return const Color(0xFFD97706); // Amber for Assignments
+      return context.c.tint(const Color(0xFFD97706)); // Amber for Assignments
     }
     return Theme.of(context).colorScheme.error; // Crimson Red for general PDFs / PYQs
   }
@@ -1176,10 +1147,10 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
                                   width: 64,
                                   height: 64,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFEF3C7),
+                                    color: context.c.warningSoft,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: const Icon(Icons.push_pin_outlined, color: Color(0xFFD97706), size: 30),
+                                  child: Icon(Icons.push_pin_outlined, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)), size: 30),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
@@ -1247,7 +1218,7 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
                                         ? const Color(0xFFF59E0B).withValues(alpha: 0.08)
                                         : isExamSaver 
                                             ? const Color(0xFFF59E0B).withValues(alpha: 0.05)
-                                            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                                            : context.c.shadow.withValues(alpha: 0.02),
                                     blurRadius: 10,
                                     offset: const Offset(0, 6),
                                   ),
@@ -1302,18 +1273,18 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
                                                     Container(
                                                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                                       decoration: BoxDecoration(
-                                                        color: const Color(0xFFFEF3C7),
+                                                        color: context.c.warningSoft,
                                                         borderRadius: BorderRadius.circular(8),
-                                                        border: Border.all(color: const Color(0xFFFCD34D)),
+                                                        border: Border.all(color: context.c.pick(const Color(0xFFFCD34D), const Color(0xFF5C4413))),
                                                       ),
-                                                      child: const Row(
+                                                      child: Row(
                                                         mainAxisSize: MainAxisSize.min,
                                                         children: [
-                                                          Icon(Icons.push_pin_rounded, size: 11, color: Color(0xFFD97706)),
+                                                          Icon(Icons.push_pin_rounded, size: 11, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24))),
                                                           SizedBox(width: 3),
                                                           Text(
                                                             "PINNED",
-                                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFD97706), fontFamily: 'Manrope'),
+                                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)), fontFamily: 'Manrope'),
                                                           ),
                                                         ],
                                                       ),
@@ -1360,7 +1331,7 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
                                                     Container(
                                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                       decoration: BoxDecoration(
-                                                        color: const Color(0xFFFEF3C7),
+                                                        color: context.c.warningSoft,
                                                         borderRadius: BorderRadius.circular(6),
                                                       ),
                                                       child: Row(
@@ -1370,10 +1341,10 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
                                                           const SizedBox(width: 2),
                                                           Text(
                                                             avgRating.toStringAsFixed(1),
-                                                            style: const TextStyle(
+                                                            style: TextStyle(
                                                               fontSize: 11,
                                                               fontWeight: FontWeight.w900,
-                                                              color: Color(0xFF92400E),
+                                                              color: context.c.pick(const Color(0xFF92400E), const Color(0xFFFCD34D)),
                                                               fontFamily: 'Manrope',
                                                             ),
                                                           ),
@@ -1449,7 +1420,7 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
                                                     Icons.more_vert_rounded,
                                                     size: 20,
                                                     color: isPinned 
-                                                        ? const Color(0xFFD97706) 
+                                                        ? context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)) 
                                                         : Theme.of(context).colorScheme.onSurfaceVariant,
                                                   ),
                                                 ),
@@ -1464,26 +1435,10 @@ class _MaterialsListScreenState extends State<MaterialsListScreen> {
                               ),
                             ));
 
-                            final interval = AdService().nativeAdInterval;
-                            if ((index + 1) % interval == 0 && index != _materials.length - 1) {
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  matCard,
-                                  const AdNativeCard(
-                                    placementKey: 'notes_materials_in_between',
-                                    isMediumTemplate: false,
-                                    margin: EdgeInsets.only(bottom: 12),
-                                  ),
-                                ],
-                              );
-                            }
                             return matCard;
                           },
                         ),
                 ),
-                const SizedBox(height: 6),
-                const Center(child: AdBannerWidget(placementKey: 'notes_screen')),
                 const SizedBox(height: 8),
               ],
             ),
@@ -1626,7 +1581,7 @@ class _SubjectInfoBottomSheetState extends State<SubjectInfoBottomSheet> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEE2E2), // Light theme red
+                            color: context.c.dangerSoft, // Light theme red
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(Icons.menu_book_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
@@ -1673,9 +1628,9 @@ class _SubjectInfoBottomSheetState extends State<SubjectInfoBottomSheet> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
+                        color: context.c.warningSoft,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFFEDD5)),
+                        border: Border.all(color: context.c.pick(const Color(0xFFFFEDD5), const Color(0xFF5C4413))),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1686,11 +1641,11 @@ class _SubjectInfoBottomSheetState extends State<SubjectInfoBottomSheet> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Disclaimer", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF9A3412))),
+                                Text("Disclaimer", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.c.pick(const Color(0xFF9A3412), const Color(0xFFFDBA74)))),
                                 SizedBox(height: 6),
                                 Text(
                                   "These notes do not guarantee full marks. Please refer to official university textbooks for comprehensive preparation.", 
-                                  style: TextStyle(fontSize: 14, color: Color(0xFF9A3412), height: 1.5, fontWeight: FontWeight.w500),
+                                  style: TextStyle(fontSize: 14, color: context.c.pick(const Color(0xFF9A3412), const Color(0xFFFDBA74)), height: 1.5, fontWeight: FontWeight.w500),
                                 ),
                               ],
                             ),
@@ -1720,7 +1675,7 @@ class _SubjectInfoBottomSheetState extends State<SubjectInfoBottomSheet> {
                                 children: [
                                   Icon(Icons.folder_zip_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 22),
                                   SizedBox(width: 10),
-                                  Text("Cached PDFs", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                                  Text("Cached PDFs", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.c.textSecondary)),
                                 ],
                               ),
                               _isLoading
@@ -1739,10 +1694,10 @@ class _SubjectInfoBottomSheetState extends State<SubjectInfoBottomSheet> {
                               icon: Icon(Icons.delete_sweep_rounded, size: 20),
                               label: Text("Clear Subject Cache", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFFEF2F2),
-                                foregroundColor: const Color(0xFFDC2626),
-                                disabledBackgroundColor: const Color(0xFFF1F4F9),
-                                disabledForegroundColor: const Color(0xFF94A3B8),
+                                backgroundColor: context.c.accentSoft,
+                                foregroundColor: context.c.pick(const Color(0xFFDC2626), const Color(0xFFF87171)),
+                                disabledBackgroundColor: context.c.bg,
+                                disabledForegroundColor: context.c.textFaint,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 elevation: 0,
@@ -1773,14 +1728,14 @@ class _SubjectInfoBottomSheetState extends State<SubjectInfoBottomSheet> {
             color: Theme.of(context).colorScheme.surfaceContainer,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: const Color(0xFF475569), size: 22),
+          child: Icon(icon, color: context.c.textSecondary, size: 22),
         ),
         SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+              Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.c.textSoft)),
               SizedBox(height: 6),
               Text(
                 description, 
@@ -2003,19 +1958,19 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: Colors.white,
                     strokeWidth: 3,
                   ),
                   SizedBox(height: 24),
                   Text(
                     "Opening document...",
-                    style: TextStyle(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9), fontSize: 16, fontWeight: FontWeight.w400),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 16, fontWeight: FontWeight.w400),
                   ),
                   if (_downloadProgress > 0) ...[
                     SizedBox(height: 8),
                     Text(
                       "${(_downloadProgress * 100).toInt()}%",
-                      style: TextStyle(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6), fontSize: 14),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
                     ),
                   ]
                 ],
@@ -2026,18 +1981,18 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 48),
+                  Icon(Icons.error_outline, color: Colors.white70, size: 48),
                   SizedBox(height: 16),
                   Text(
                     "Unable to open document",
-                    style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 18, fontWeight: FontWeight.w400),
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
                   ),
                   SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
                       _errorMessage ?? "Unknown error",
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -2090,7 +2045,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.error_outline, color: Colors.red, size: 64),
+                                Icon(Icons.error_outline, color: context.c.danger, size: 64),
                                 const SizedBox(height: 16),
                                 const Text(
                                   "Failed to open as PDF.",
@@ -2169,7 +2124,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                                 child: Text(
                                   "${pageNumber ?? 1}/$_totalPages",
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.surface,
+                                    color: Colors.white,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -2190,7 +2145,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                               alignment: Alignment.center,
                               child: Icon(
                                 Icons.unfold_more,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Colors.white,
                                 size: 20,
                               ),
                             ),
@@ -2240,10 +2195,10 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                 toolbarHeight: 64,
                 backgroundColor: driveDark.withValues(alpha: 0.95),
                 elevation: 0,
-                iconTheme: IconThemeData(color: Theme.of(context).colorScheme.surface),
+                iconTheme: IconThemeData(color: Colors.white),
                 titleSpacing: 0,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.surface, size: 24),
+                  icon: Icon(Icons.arrow_back, color: Colors.white, size: 24),
                   onPressed: () {
                     if (_isSearchMode) {
                       setState(() {
@@ -2259,15 +2214,15 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                 title: _isSearchMode
                   ? TextField(
                       controller: _searchController,
-                      style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 16),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                       autofocus: true,
                       cursorColor: Colors.white,
                       decoration: InputDecoration(
                         hintText: 'Search in document...',
-                        hintStyle: TextStyle(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6), fontSize: 16),
+                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 16),
                         border: InputBorder.none,
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.clear, color: Theme.of(context).colorScheme.onSurface, size: 20),
+                          icon: Icon(Icons.clear, color: Colors.white, size: 20),
                           onPressed: () {
                             _searchController.clear();
                             _textSearcher?.resetTextSearch();
@@ -2286,7 +2241,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                     )
                   : Text(
                       widget.pdfTitle,
-                      style: TextStyle(color: Theme.of(context).colorScheme.surface, fontSize: 18, fontWeight: FontWeight.w400),
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w400),
                       overflow: TextOverflow.ellipsis,
                     ),
                 actions: _isSearchMode
@@ -2301,17 +2256,17 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                                   _textSearcher!.hasMatches
                                       ? '${(_textSearcher!.currentIndex ?? 0) + 1}/${_textSearcher!.matches.length}'
                                       : '0/0',
-                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                                  style: TextStyle(color: Colors.white, fontSize: 14),
                                 ),
                                 IconButton(
-                                  icon: Icon(Icons.keyboard_arrow_up, color: Theme.of(context).colorScheme.surface),
+                                  icon: Icon(Icons.keyboard_arrow_up, color: Colors.white),
                                   onPressed: _textSearcher!.hasMatches ? () async {
                                     await _textSearcher!.goToPrevMatch();
                                     _textSearcher!.notifyListeners();
                                   } : null,
                                 ),
                                 IconButton(
-                                  icon: Icon(Icons.keyboard_arrow_down, color: Theme.of(context).colorScheme.surface),
+                                  icon: Icon(Icons.keyboard_arrow_down, color: Colors.white),
                                   onPressed: _textSearcher!.hasMatches ? () async {
                                     await _textSearcher!.goToNextMatch();
                                     _textSearcher!.notifyListeners();
@@ -2341,7 +2296,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                           },
                         ),
                       IconButton(
-                        icon: Icon(Icons.find_in_page_outlined, color: Theme.of(context).colorScheme.surface),
+                        icon: Icon(Icons.find_in_page_outlined, color: Colors.white),
                         onPressed: () {
                           setState(() {
                             _isSearchMode = true;
@@ -2349,7 +2304,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> with WidgetsBindingOb
                         },
                       ),
                       IconButton(
-                        icon: Icon(Icons.share, color: Theme.of(context).colorScheme.surface),
+                        icon: Icon(Icons.share, color: Colors.white),
                         onPressed: () {
                           if (widget.materialId != null && widget.materialId!.isNotEmpty) {
                             AnalyticsService.logMaterialInteraction(
@@ -2596,11 +2551,11 @@ class _MaterialRatingBottomSheetState extends State<MaterialRatingBottomSheet> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: context.c.warningSoft,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFFCD34D)),
+                      border: Border.all(color: context.c.pick(const Color(0xFFFCD34D), const Color(0xFF5C4413))),
                     ),
-                    child: const Icon(Icons.star_rounded, color: Color(0xFFD97706), size: 26),
+                    child: Icon(Icons.star_rounded, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)), size: 26),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -2655,7 +2610,7 @@ class _MaterialRatingBottomSheetState extends State<MaterialRatingBottomSheet> {
                           child: Icon(
                             isFilled ? Icons.star_rounded : Icons.star_outline_rounded,
                             size: 40,
-                            color: isFilled ? const Color(0xFFF59E0B) : const Color(0xFFCBD5E1),
+                            color: isFilled ? const Color(0xFFF59E0B) : context.c.borderStrong,
                           ),
                         ),
                       ),
@@ -2669,10 +2624,10 @@ class _MaterialRatingBottomSheetState extends State<MaterialRatingBottomSheet> {
               Center(
                 child: Text(
                   _getRatingFeedbackText(_selectedRating),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFFD97706),
+                    color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)),
                     fontFamily: 'Manrope',
                   ),
                 ),
@@ -2735,7 +2690,7 @@ class _MaterialRatingBottomSheetState extends State<MaterialRatingBottomSheet> {
               FilledButton(
                 onPressed: _isSubmitting ? null : _submitRating,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFC62828),
+                  backgroundColor: context.c.accentFill,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -2844,11 +2799,11 @@ class MaterialActionsBottomSheet extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFC62828).withValues(alpha: 0.08),
+                        color: context.c.accentFill.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFC62828).withValues(alpha: 0.18)),
+                        border: Border.all(color: context.c.accent.withValues(alpha: 0.18)),
                       ),
-                      child: const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFC62828), size: 22),
+                      child: Icon(Icons.picture_as_pdf_rounded, color: context.c.accent, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2901,8 +2856,8 @@ class MaterialActionsBottomSheet extends StatelessWidget {
                     _buildActionTile(
                       context,
                       icon: isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
-                      iconColor: isPinned ? const Color(0xFFD97706) : Theme.of(context).colorScheme.onSurface,
-                      iconBg: isPinned ? const Color(0xFFFEF3C7) : Theme.of(context).colorScheme.surface,
+                      iconColor: isPinned ? context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)) : Theme.of(context).colorScheme.onSurface,
+                      iconBg: isPinned ? context.c.warningSoft : Theme.of(context).colorScheme.surface,
                       title: isPinned ? "Unpin from Top" : "Pin to Top of Materials",
                       subtitle: isPinned ? "Remove from sticky priority" : "Lock to the top of list for instant access",
                       trailingBadge: isPinned ? "Pinned" : null,
@@ -2920,7 +2875,7 @@ class MaterialActionsBottomSheet extends StatelessWidget {
                       context,
                       icon: Icons.star_rounded,
                       iconColor: const Color(0xFFF59E0B),
-                      iconBg: const Color(0xFFFEF3C7),
+                      iconBg: context.c.warningSoft,
                       title: "Rate this Study Material",
                       subtitle: ratingCount > 0 
                           ? "Currently rated ★ ${avgRating.toStringAsFixed(1)} ($ratingCount ratings)"
@@ -2937,8 +2892,8 @@ class MaterialActionsBottomSheet extends StatelessWidget {
                     _buildActionTile(
                       context,
                       icon: Icons.share_rounded,
-                      iconColor: const Color(0xFF2563EB),
-                      iconBg: const Color(0xFFEFF6FF),
+                      iconColor: context.c.info,
+                      iconBg: context.c.infoSoft,
                       title: "Share Document",
                       subtitle: "Share with classmates via WhatsApp & apps",
                       onTap: () {
@@ -2970,8 +2925,8 @@ class MaterialActionsBottomSheet extends StatelessWidget {
                     _buildActionTile(
                       context,
                       icon: Icons.open_in_new_rounded,
-                      iconColor: const Color(0xFF059669),
-                      iconBg: const Color(0xFFECFDF5),
+                      iconColor: context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)),
+                      iconBg: context.c.successSoft,
                       title: "Open & View Document",
                       subtitle: "Read PDF with built-in search and pages",
                       onTap: () {
@@ -3054,16 +3009,16 @@ class MaterialActionsBottomSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
+                    color: context.c.warningSoft,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFFCD34D)),
+                    border: Border.all(color: context.c.pick(const Color(0xFFFCD34D), const Color(0xFF5C4413))),
                   ),
                   child: Text(
                     trailingBadge,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF92400E),
+                      color: context.c.pick(const Color(0xFF92400E), const Color(0xFFFCD34D)),
                       fontFamily: 'Manrope',
                     ),
                   ),

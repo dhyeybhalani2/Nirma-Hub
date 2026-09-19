@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../services/ad_service.dart';
 import '../domain/user_profile.dart';
 
 class AuthRepository {
@@ -54,14 +53,10 @@ class AuthRepository {
       idToken: idToken,
       accessToken: accessToken,
     );
-
-    // Grant 24-hour free welcome pass on sign in
-    await AdService.checkAndGrantFirstTimeWelcomePass();
   }
 
   /// Signs the user out from Supabase and Google
   Future<void> signOut() async {
-    await AdService.onSignOut();
     await GoogleSignIn.instance.signOut();
     await _supabase.auth.signOut();
   }
@@ -92,9 +87,6 @@ class AuthRepository {
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('academic_year', academicYear);
-
-    // Grant 24-hour free welcome pass on new profile creation
-    await AdService.checkAndGrantFirstTimeWelcomePass();
   }
 
   Future<void> updateProfile({

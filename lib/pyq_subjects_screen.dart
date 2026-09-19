@@ -7,8 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'pyq_list_screen.dart';
 import 'widgets/skeleton_loaders.dart';
-import 'widgets/ad_native_widget.dart';
-import 'services/ad_service.dart';
+import 'core/theme/app_theme.dart';
 
 class PyqSubjectsScreen extends ConsumerStatefulWidget {
   const PyqSubjectsScreen({super.key});
@@ -48,7 +47,7 @@ class _PyqSubjectsScreenState extends ConsumerState<PyqSubjectsScreen> {
       const Color(0xFFF57C00), const Color(0xFFFBC02D), const Color(0xFF0097A7),
       const Color(0xFFC2185B), const Color(0xFF3F51B5), const Color(0xFFD84315)
     ];
-    return colors[hash % colors.length];
+    return context.c.tint(colors[hash % colors.length]);
   }
 
   Future<void> _fetchSubjects(String rawAcademicYear, String userBranch) async {
@@ -215,7 +214,7 @@ class _PyqSubjectsScreenState extends ConsumerState<PyqSubjectsScreen> {
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                              color: context.c.shadow.withValues(alpha: 0.02),
                               blurRadius: 10,
                               offset: const Offset(0, 6),
                             ),
@@ -290,7 +289,7 @@ class _PyqSubjectsScreenState extends ConsumerState<PyqSubjectsScreen> {
                                       ],
                                     ),
                                   ),
-                                  Icon(CupertinoIcons.chevron_forward, color: Color(0xFFCBD5E1), size: 20),
+                                  Icon(CupertinoIcons.chevron_forward, color: context.c.borderStrong, size: 20),
                                 ],
                               ),
                             ),
@@ -300,20 +299,6 @@ class _PyqSubjectsScreenState extends ConsumerState<PyqSubjectsScreen> {
                     ),
                   );
 
-                  final interval = AdService().nativeAdInterval;
-                  if ((index + 1) % interval == 0 && index != filteredSubjects.length - 1) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        subjectCard,
-                        const AdNativeCard(
-                          placementKey: 'subjects_in_between',
-                          isMediumTemplate: false,
-                          margin: EdgeInsets.only(bottom: 12),
-                        ),
-                      ],
-                    );
-                  }
                   return subjectCard;
                 },
                 childCount: filteredSubjects.length,
@@ -334,7 +319,7 @@ class _PyqSubjectsScreenState extends ConsumerState<PyqSubjectsScreen> {
         });
       },
       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, fontFamily: 'Manrope'),
-      cursorColor: const Color(0xFFC62828),
+      cursorColor: context.c.accent,
       decoration: InputDecoration(
         hintText: 'Search subjects or codes...',
         hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 15),
@@ -343,7 +328,7 @@ class _PyqSubjectsScreenState extends ConsumerState<PyqSubjectsScreen> {
           child: Icon(Icons.search, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.c.card,
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),

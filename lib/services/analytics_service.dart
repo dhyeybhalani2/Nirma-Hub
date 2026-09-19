@@ -234,35 +234,6 @@ class AnalyticsService {
     }
   }
 
-  // --- 📢 Ad Event Logging ---
-  static Future<void> logAdEvent({
-    required String adType, // 'rewarded', 'interstitial', 'app_open', 'banner'
-    required String placement, // 'timetable_notification_pass', 'sgpa_calculator', 'app_launch', 'notes_list', 'pyq_list', 'imp_screen'
-    required String eventType, // 'impression', 'reward_earned', 'click'
-  }) async {
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      final prefs = await SharedPreferences.getInstance();
-      String? deviceId = prefs.getString('analytics_device_id');
-      if (deviceId == null) {
-        deviceId = 'anon_${DateTime.now().millisecondsSinceEpoch}';
-        await prefs.setString('analytics_device_id', deviceId);
-      }
-
-      await Supabase.instance.client.from('ad_events').insert({
-        'ad_type': adType,
-        'placement': placement,
-        'event_type': eventType,
-        'user_id': user?.id ?? deviceId,
-        'user_email': user?.email,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-      print("Analytics: Logged Ad Event [$adType | $placement | $eventType]");
-    } catch (e) {
-      print("Analytics: Ad event logging skipped: $e");
-    }
-  }
-
   // --- Internal Helper ---
   static Future<void> _sendSession(String eventType, int durationSeconds, Map<String, dynamic>? metadata) async {
     try {
@@ -287,4 +258,29 @@ class AnalyticsService {
       print("Analytics send failed: $e");
     }
   }
+
+  // --- Real-time Activity / Retention Ping ---
+  static Future<void> recordUserActivity() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+
+      // 1. Try atomic RPC function 'record_app_open'
+      try {
+        await Supabase.instance.client.rpc('record_app_open', params: {
+          'user_app_version': '1.1.1+14',
+        });
+        return;
+      } catch (_) {
+        // Fallback: direct update to profiles table
+        await Supabase.instance.client.from('profiles').update({
+          'last_active_at': DateTime.now().toUtc().toIso8601String(),
+          'app_version': '1.1.1+14',
+        }).eq('id', user.id);
+      }
+    } catch (_) {
+      // Fire-and-forget: fail silently so UI is never disrupted
+    }
+  }
 }
+

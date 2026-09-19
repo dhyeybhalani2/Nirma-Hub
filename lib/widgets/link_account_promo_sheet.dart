@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import '../core/theme/app_theme.dart';
 
 class LinkAccountPromoSheet extends StatelessWidget {
   final String platform;
@@ -34,7 +35,7 @@ class LinkAccountPromoSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.c.card,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
@@ -118,7 +119,7 @@ class LinkAccountPromoSheet extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: context.c.fill,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                   ),
@@ -163,7 +164,7 @@ class LinkAccountPromoSheet extends StatelessWidget {
                         onLinkPressed();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
+                        backgroundColor: context.c.dangerFill,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

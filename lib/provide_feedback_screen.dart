@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'core/theme/app_theme.dart';
 
 class ProvideFeedbackScreen extends ConsumerStatefulWidget {
   const ProvideFeedbackScreen({super.key});
@@ -12,12 +13,12 @@ class ProvideFeedbackScreen extends ConsumerStatefulWidget {
 }
 
 class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
-  final Color nirmaNavy = const Color(0xFF1A2B48);
-  final Color nirmaRed = const Color(0xFFC62828);
-  final Color textDark = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFCBD5E1);
-  final Color scaffoldBg = const Color(0xFFF1F4F9);
+  Color get nirmaNavy => context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0));
+  Color get nirmaRed => context.c.accent;
+  Color get textDark => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.borderStrong;
+  Color get scaffoldBg => context.c.bg;
 
   int _rating = 0;
   final TextEditingController _feedbackController = TextEditingController();
@@ -29,7 +30,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.error_outline, color: Theme.of(context).colorScheme.surface),
+              Icon(Icons.error_outline, color: Colors.white),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -39,7 +40,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
               ),
             ],
           ),
-          backgroundColor: nirmaRed,
+          backgroundColor: context.c.accentFill,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
@@ -67,7 +68,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle_outline, color: Theme.of(context).colorScheme.surface),
+                Icon(Icons.check_circle_outline, color: Colors.white),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -77,7 +78,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
                 ),
               ],
             ),
-            backgroundColor: nirmaNavy,
+            backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -91,7 +92,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.error_outline, color: Theme.of(context).colorScheme.surface),
+                Icon(Icons.error_outline, color: Colors.white),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -101,7 +102,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
                 ),
               ],
             ),
-            backgroundColor: nirmaRed,
+            backgroundColor: context.c.accentFill,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -262,7 +263,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
               // Submit Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: nirmaNavy,
+                  backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,
@@ -275,14 +276,14 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
                     ? SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface, strokeWidth: 2),
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
                     : Text(
                         'Submit Feedback',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.surface,
+                          color: Colors.white,
                           fontFamily: 'Manrope',
                           letterSpacing: 0.5,
                         ),

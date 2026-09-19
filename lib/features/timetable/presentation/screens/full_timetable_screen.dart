@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/timetable_provider.dart';
 import '../../domain/timetable_entry.dart';
 import '../../../../home_screen.dart';
-import '../../../../widgets/ad_native_widget.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class FullTimetableScreen extends ConsumerStatefulWidget {
   const FullTimetableScreen({super.key});
@@ -15,11 +15,11 @@ class FullTimetableScreen extends ConsumerStatefulWidget {
 }
 
 class _FullTimetableScreenState extends ConsumerState<FullTimetableScreen> {
-  final Color nirmaRed = const Color(0xFFC62828);
-  final Color textGray = const Color(0xFF64748B);
-  final Color baseNavy = const Color(0xFF0F172A);
-  final Color borderGray = const Color(0xFFE2E8F0);
-  final Color bgSurface = const Color(0xFFF1F4F9); // Slate 100
+  Color get nirmaRed => context.c.accent;
+  Color get textGray => context.c.textMuted;
+  Color get baseNavy => context.c.text;
+  Color get borderGray => context.c.border;
+  Color get bgSurface => context.c.bg; // Slate 100
 
   int _timeToMinutes(String timeStr) {
     if (timeStr.isEmpty) return 0;
@@ -181,12 +181,6 @@ class _FullTimetableScreenState extends ConsumerState<FullTimetableScreen> {
               "No classes scheduled for $day! 🎉", 
               style: TextStyle(color: textGray, fontWeight: FontWeight.w700, fontSize: 15),
             ),
-            const SizedBox(height: 36),
-            const AdNativeCard(
-              placementKey: 'timetable_below_full_schedule',
-              isMediumTemplate: true,
-              margin: EdgeInsets.only(bottom: 24),
-            ),
           ],
         ),
       );
@@ -205,18 +199,8 @@ class _FullTimetableScreenState extends ConsumerState<FullTimetableScreen> {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       physics: const BouncingScrollPhysics(),
-      itemCount: targetLectures.length + 1,
+      itemCount: targetLectures.length,
       itemBuilder: (context, index) {
-        if (index == targetLectures.length) {
-          return const Padding(
-            padding: EdgeInsets.only(top: 8, bottom: 24),
-            child: AdNativeCard(
-              placementKey: 'timetable_below_full_schedule',
-              isMediumTemplate: true,
-            ),
-          );
-        }
-
         final lecture = targetLectures[index];
         
         Widget freeLectureWidget = SizedBox.shrink();

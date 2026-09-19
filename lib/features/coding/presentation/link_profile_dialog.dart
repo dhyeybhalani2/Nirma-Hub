@@ -3,6 +3,7 @@ import '../data/coding_service.dart';
 import '../../auth/domain/user_profile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../../core/theme/app_theme.dart';
 
 class LinkProfileDialog extends ConsumerStatefulWidget {
   final bool isLeetCode; // true for LeetCode, false for Codeforces
@@ -67,7 +68,8 @@ class _LinkProfileDialogState extends ConsumerState<LinkProfileDialog> {
       _isLoading = false;
     });
 
-    final primaryColor = widget.isLeetCode ? const Color(0xFFC62828) : const Color(0xFF3B82F6);
+    // A button fill needs a deep tone so the white label stays readable
+    final primaryFill = widget.isLeetCode ? context.c.accentFill : context.c.infoFill;
 
     // Show confirmation dialog
     bool? confirm = await showDialog<bool>(
@@ -100,13 +102,13 @@ class _LinkProfileDialogState extends ConsumerState<LinkProfileDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+            style: TextButton.styleFrom(foregroundColor: context.c.textMuted),
             child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
+              backgroundColor: primaryFill,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -145,7 +147,9 @@ class _LinkProfileDialogState extends ConsumerState<LinkProfileDialog> {
   @override
   Widget build(BuildContext context) {
     final platform = widget.isLeetCode ? 'LeetCode' : 'Codeforces';
-    final primaryColor = widget.isLeetCode ? const Color(0xFFC62828) : const Color(0xFF3B82F6);
+    final primaryColor = widget.isLeetCode ? context.c.accent : context.c.pick(const Color(0xFF3B82F6), const Color(0xFF60A5FA));
+    // A button fill needs a deep tone so the white label stays readable
+    final primaryFill = widget.isLeetCode ? context.c.accentFill : context.c.infoFill;
 
     return AlertDialog(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -166,7 +170,7 @@ class _LinkProfileDialogState extends ConsumerState<LinkProfileDialog> {
               labelText: 'Username',
               errorText: _error,
               filled: true,
-              fillColor: const Color(0xFFF8FAFC),
+              fillColor: context.c.fill,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -182,19 +186,19 @@ class _LinkProfileDialogState extends ConsumerState<LinkProfileDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+          style: TextButton.styleFrom(foregroundColor: context.c.textMuted),
           child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _linkProfile,
           style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
+            backgroundColor: primaryFill,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
           child: _isLoading 
-            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.surface))
+            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text('Link', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],

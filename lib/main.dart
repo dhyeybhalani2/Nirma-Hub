@@ -13,7 +13,6 @@ import 'services/recent_files_service.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/analytics_service.dart';
-import 'services/ad_service.dart';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,6 +23,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'peer_to_peer_screen.dart';
 import 'lost_found_screen.dart';
+import 'core/theme/app_theme.dart';
 
 late SharedPreferences sharedPrefs;
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -44,11 +44,13 @@ void main() async {
 
   // Parallelize all heavy initialization tasks to drastically cut launch time
   await Future.wait([
-    SharedPreferences.getInstance().then((prefs) => sharedPrefs = prefs),
+    SharedPreferences.getInstance().then((prefs) {
+      sharedPrefs = prefs;
+      ThemeController.instance.init(prefs);
+    }),
     NotificationService().init(),
     RecentFilesService.init(),
     Firebase.initializeApp(),
-    AdService().init(),
   ]);
 
   // Non-blocking Firebase permission and subscription tasks (Fire-and-forget)
@@ -84,15 +86,11 @@ class _NirmaHubAppState extends State<NirmaHubApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    AnalyticsService.recordUserActivity();
     AnalyticsService.initAndCheckStrandedSessions().then((_) {
       AnalyticsService.startAppSession();
     });
     _setupPushNotificationRouting();
-
-    // Soft App Open Ad trigger after splash initialization
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      AdService().showAppOpenAdIfAvailable();
-    });
   }
 
   @override
@@ -104,8 +102,8 @@ class _NirmaHubAppState extends State<NirmaHubApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      AnalyticsService.recordUserActivity();
       AnalyticsService.startAppSession();
-      AdService().showAppOpenAdIfAvailable();
     } else if (state == AppLifecycleState.paused) {
       AnalyticsService.endAppSession();
     }
@@ -159,49 +157,29 @@ class _NirmaHubAppState extends State<NirmaHubApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Nirma Hub',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF1F4F9), // Slate 100
-        fontFamily: 'Inter',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFC62828), // Nirma Red Focus
-          primary: const Color(0xFF1A2B48), // Navy
-          surface: Colors.white,
-          surfaceTint: Colors.transparent,
-          surfaceContainerLowest: Colors.white,
-          surfaceContainerLow: const Color(0xFFF8FAFC),
-          surfaceContainer: const Color(0xFFF1F4F9),
-          surfaceContainerHigh: const Color(0xFFE2E8F0),
-          surfaceContainerHighest: const Color(0xFFCBD5E1),
-          outline: const Color(0xFFCBD5E1),
-          outlineVariant: const Color(0xFFE2E8F0),
-        ),
-        dialogTheme: const DialogThemeData(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-        ),
-        bottomSheetTheme: const BottomSheetThemeData(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-        ),
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: <TargetPlatform, PageTransitionsBuilder>{
-            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'Nirma Hub',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          // Cross-fades every themed colour when the sun / moon button is tapped.
+          themeAnimationDuration: const Duration(milliseconds: 280),
+          themeAnimationCurve: Curves.easeInOut,
+          builder: (context, child) {
+            return GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              behavior: HitTestBehavior.translucent,
+              child: child!,
+            );
           },
-        ),
-      ),
-      builder: (context, child) {
-        return GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          behavior: HitTestBehavior.translucent,
-          child: child!,
+          home: const AuthGate(),
         );
       },
-      home: const AuthGate(),
     );
   }
 }
@@ -351,12 +329,14 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
   };
 
   // Colors
-  final Color nirmaNavy = const Color(0xFF1A2B48);
-  final Color nirmaRed = const Color(0xFFC62828); // Vibrant Hub Red
-  final Color textDark = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFCBD5E1);
-  final Color inputFill = const Color(0xFFF8FAFC);
+  Color get nirmaNavy => context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0)); // text / icons
+  Color get navyFill => context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)); // solid buttons
+  Color get nirmaRed => context.c.accent; // Vibrant Hub Red
+  Color get redFill => context.c.accentFill;
+  Color get textDark => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.borderStrong;
+  Color get inputFill => context.c.fill;
 
   @override
   void initState() {
@@ -407,13 +387,13 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
     if (_formKey.currentState!.validate()) {
       if (_selectedGradYear == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Please select your Graduation Year.'), backgroundColor: nirmaRed),
+          SnackBar(content: const Text('Please select your Graduation Year.'), backgroundColor: redFill),
         );
         return;
       }
       if (_selectedBranch == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Please select a Branch.'), backgroundColor: nirmaRed),
+          SnackBar(content: const Text('Please select a Branch.'), backgroundColor: redFill),
         );
         return;
       }
@@ -453,10 +433,10 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
   }) async {
     FocusManager.instance.primaryFocus?.unfocus(); // Force keyboard dismissal safely
 
-    final Color nirmaRedTheme = const Color(0xFFC62828);
-    final Color nirmaNavyTheme = const Color(0xFF1A2B48);
-    final Color textDarkTheme = const Color(0xFF1E293B);
-    final Color textGrayTheme = const Color(0xFF64748B);
+    final Color nirmaRedTheme = context.c.accent;
+    final Color nirmaNavyTheme = nirmaNavy;
+    final Color textDarkTheme = context.c.textSoft;
+    final Color textGrayTheme = context.c.textMuted;
 
     final result = await showModalBottomSheet<String>(
       context: context,
@@ -506,7 +486,7 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
           
           if (errorMsg.contains('REDIRECT_TO_SIGNUP')) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: const Text('You don\'t have an account yet. Please fill out the registration form below.'), backgroundColor: nirmaRed),
+              SnackBar(content: const Text('You don\'t have an account yet. Please fill out the registration form below.'), backgroundColor: redFill),
             );
             // Auto scroll down to the first field (Full Name)
             _scrollController.animateTo(200, duration: const Duration(milliseconds: 600), curve: Curves.easeInOut);
@@ -523,10 +503,10 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                 return BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                   child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                      boxShadow: [
+                    decoration: BoxDecoration(
+                      color: context.c.card,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                      boxShadow: const [
                         BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))
                       ]
                     ),
@@ -540,20 +520,20 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                             margin: const EdgeInsets.only(bottom: 24),
                             height: 4,
                             width: 48,
-                            decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2)),
+                            decoration: BoxDecoration(color: context.c.borderStrong, borderRadius: BorderRadius.circular(2)),
                           ),
                         ),
-                        const Icon(Icons.account_circle_rounded, color: Color(0xFF1A2B48), size: 56),
+                        Icon(Icons.account_circle_rounded, color: nirmaNavy, size: 56),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Account Already Exists',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: context.c.textSoft),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'An account is already linked to\n$email',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 15, color: Color(0xFF64748B), height: 1.4),
+                          style: TextStyle(fontSize: 15, color: context.c.textMuted, height: 1.4),
                         ),
                         const SizedBox(height: 28),
                         SizedBox(
@@ -564,7 +544,7 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                               _scrollController.animateTo(0, duration: const Duration(milliseconds: 600), curve: Curves.easeInOut);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1A2B48),
+                              backgroundColor: navyFill,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -587,8 +567,8 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
       },
     );
 
-    final Color nirmaRedTheme = const Color(0xFFC62828);
-    final Color beamColor = widget.isSuccessMode 
+    final Color nirmaRedTheme = context.c.accent;
+    final Color beamColor = widget.isSuccessMode  
         ? const Color(0xFF10B981) 
         : (isLoading && _buttonPressed ? const Color(0xFFF59E0B) : nirmaRedTheme);
 
@@ -596,7 +576,7 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF1F4F9), // Slate 100 bgSurface
+        backgroundColor: context.c.bg, // Slate 100 bgSurface
         body: Stack(
         children: [
           // ── ULTRA-PREMIUM SUBTLE AMBIENT BACKGROUND ──
@@ -612,12 +592,12 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                     Container(
                       width: 450, // Optimal reading boundaries
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.c.card,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 6)),
+                          BoxShadow(color: Colors.black.withValues(alpha: context.c.isDark ? 0.35 : 0.03), blurRadius: context.c.isDark ? 24 : 10, offset: const Offset(0, 6)),
                         ],
-                        border: Border.all(color: borderGray.withValues(alpha: 0.3)),
+                        border: Border.all(color: borderGray.withValues(alpha: context.c.isDark ? 0.6 : 0.3)),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min, // Shrink to fit content
@@ -664,11 +644,11 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                                 Color loginBgColor = nirmaRed.withValues(alpha: 0.06); // Glassy light red
                                 Color loginBorderColor = nirmaRed.withValues(alpha: 0.15);
                                 if (isLoginLoading) {
-                                  loginBgColor = Colors.white;
+                                  loginBgColor = context.c.card;
                                   loginBorderColor = borderGray;
                                 } else if (isLoginSuccess) {
-                                  loginBgColor = const Color(0xFFD1FAE5);
-                                  loginBorderColor = const Color(0xFFA7F3D0);
+                                  loginBgColor = context.c.successSoft;
+                                  loginBorderColor = context.c.successBorder;
                                 }
 
                                 return AnimatedContainer(
@@ -726,9 +706,9 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                                                       key: const ValueKey('loading'),
                                                       mainAxisAlignment: MainAxisAlignment.center,
                                                       children: [
-                                                        const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706))),
+                                                        SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)))),
                                                         const SizedBox(width: 10),
-                                                        const Text('Loading...', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFFD97706))),
+                                                        Text('Loading...', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)))),
                                                       ],
                                                     )
                                                   : isLoginSuccess
@@ -736,9 +716,9 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                                                           key: const ValueKey('success'),
                                                           mainAxisAlignment: MainAxisAlignment.center,
                                                           children: [
-                                                            const Icon(Icons.verified, color: Color(0xFF059669), size: 22),
+                                                            Icon(Icons.verified, color: context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)), size: 22),
                                                             const SizedBox(width: 10),
-                                                            const Text('Access Granted', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                                                            Text('Access Granted', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)))),
                                                           ],
                                                         )
                                                       : Row(
@@ -1005,13 +985,13 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                           final isRegLoading = isLoading && !_isLoginAction && _buttonPressed;
                           final isRegSuccess = widget.isSuccessMode && !_isLoginAction;
 
-                          Color regBgColor = nirmaNavy;
+                          Color regBgColor = navyFill;
                           Color regBorderColor = Colors.transparent;
                           if (isRegSuccess) {
-                            regBgColor = const Color(0xFFD1FAE5);
-                            regBorderColor = const Color(0xFFA7F3D0);
+                            regBgColor = context.c.successSoft;
+                            regBorderColor = context.c.successBorder;
                           } else if (isRegLoading) {
-                            regBgColor = Colors.white;
+                            regBgColor = context.c.card;
                             regBorderColor = borderGray;
                           }
 
@@ -1058,9 +1038,9 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                                                 key: const ValueKey('success'),
                                                 mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
-                                                  const Icon(Icons.verified, color: Color(0xFF059669), size: 22),
+                                                  Icon(Icons.verified, color: context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)), size: 22),
                                                   const SizedBox(width: 10),
-                                                  const Text('Access Granted', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF059669))),
+                                                  Text('Access Granted', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)))),
                                                 ],
                                               )
                                             : isRegLoading
@@ -1068,9 +1048,9 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                                                     key: const ValueKey('loading'),
                                                     mainAxisAlignment: MainAxisAlignment.center,
                                                     children: [
-                                                      const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD97706))),
+                                                      SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)))),
                                                       const SizedBox(width: 10),
-                                                      const Text('Loading...', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFFD97706))),
+                                                      Text('Loading...', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)))),
                                                     ],
                                                   )
                                                 : Row(
@@ -1123,7 +1103,7 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: const Text('Please contact IT Support at backlogon@gmail.com for assistance with Nirma ID.'),
-                                backgroundColor: nirmaNavy,
+                                backgroundColor: navyFill,
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
@@ -1238,7 +1218,7 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
           child: Opacity(
             opacity: anim1.value,
             child: AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: context.c.card,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               title: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1246,26 +1226,26 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                      color: context.c.accent.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.error_outline_rounded, color: Color(0xFFC62828), size: 48),
+                    child: Icon(Icons.error_outline_rounded, color: context.c.accent, size: 48),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Authentication Failed', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                  Text('Authentication Failed', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: context.c.text)),
                 ],
               ),
               content: Text(
                 cleanMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 15, color: context.c.textMuted),
               ),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A2B48),
+                    backgroundColor: navyFill,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -1326,11 +1306,11 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
         errorMaxLines: 2,
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.2),
+          borderSide: BorderSide(color: nirmaRed, width: 1.2),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFC62828), width: 1.8),
+          borderSide: BorderSide(color: nirmaRed, width: 1.8),
         ),
       ),
     );
@@ -1396,10 +1376,10 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? nirmaRed : inputFill,
+                  color: isSelected ? redFill : inputFill,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isSelected ? nirmaRed : borderGray.withValues(alpha: 0.6),
+                    color: isSelected ? redFill : borderGray.withValues(alpha: 0.6),
                     width: 1.2,
                   ),
                 ),
@@ -1481,10 +1461,10 @@ class _GenericSelectorModalState extends State<_GenericSelectorModal> {
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Premium Glassmorphism blurring background screen
       child: Container(
         height: MediaQuery.of(context).size.height * (widget.enableSearch ? 0.70 : 0.45), // Adjusts scaling based on needs
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: context.c.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: const [
             BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))
           ]
         ),
@@ -1496,10 +1476,10 @@ class _GenericSelectorModalState extends State<_GenericSelectorModal> {
                 margin: const EdgeInsets.only(top: 14, bottom: 8),
                 height: 4,
                 width: 48,
-                decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: context.c.borderStrong, borderRadius: BorderRadius.circular(2)),
               ),
             ),
-            
+
             // Header Content
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
@@ -1527,16 +1507,21 @@ class _GenericSelectorModalState extends State<_GenericSelectorModal> {
                   controller: _searchController,
                   onChanged: _onSearch,
                   cursorColor: widget.nirmaRed,
+                  style: TextStyle(color: widget.textDark),
                   decoration: InputDecoration(
                     hintText: 'Search...',
                     hintStyle: TextStyle(color: widget.textGray.withValues(alpha: 0.6)),
                     prefixIcon: Icon(Icons.search_rounded, color: widget.textGray),
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    fillColor: context.c.fill,
                     contentPadding: const EdgeInsets.symmetric(vertical: 0),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: const Color(0xFFCBD5E1).withValues(alpha: 0.5)),
+                      borderSide: BorderSide(color: context.c.borderStrong.withValues(alpha: 0.5)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: context.c.borderStrong.withValues(alpha: 0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1549,7 +1534,7 @@ class _GenericSelectorModalState extends State<_GenericSelectorModal> {
             if (widget.enableSearch)
               const SizedBox(height: 12),
             
-            Divider(color: const Color(0xFFF1F4F9), thickness: 2, height: 0),
+            Divider(color: context.c.bg, thickness: 2, height: 0),
             
             // Scaled list rendering
             Expanded(
@@ -1572,7 +1557,7 @@ class _GenericSelectorModalState extends State<_GenericSelectorModal> {
                           tileColor: isSelected ? widget.nirmaRed.withValues(alpha: 0.05) : Colors.transparent, // Highlight background
                           onTap: () => Navigator.pop(context, item), // Return result
                           leading: CircleAvatar(
-                            backgroundColor: isSelected ? widget.nirmaRed.withValues(alpha: 0.1) : const Color(0xFFF1F4F9),
+                            backgroundColor: isSelected ? widget.nirmaRed.withValues(alpha: 0.1) : context.c.fillStrong,
                             radius: 20,
                             child: Icon(
                               targetIcon, 
@@ -1614,7 +1599,7 @@ class _PremiumAnimatedBackground extends StatefulWidget {
 class _PremiumAnimatedBackgroundState extends State<_PremiumAnimatedBackground> {
   @override
   Widget build(BuildContext context) {
-    return Container(color: const Color(0xFFF1F4F9));
+    return Container(color: context.c.bg);
   }
 }
 
@@ -1627,8 +1612,8 @@ class DynamicGraduationLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color nirmaNavy = const Color(0xFF1A2B48);
-    final Color nirmaRed = const Color(0xFFC62828);
+    final Color nirmaNavy = context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0));
+    final Color nirmaRed = context.c.pick(const Color(0xFFC62828), const Color(0xFFEF4444));
 
     return Padding(
       padding: const EdgeInsets.only(top: 16.0, bottom: 4.0),
@@ -1668,7 +1653,7 @@ class DynamicGraduationLogo extends StatelessWidget {
                 top: -53, // Micro-nudged physically downwards closer to HUB
                 child: Transform.rotate(
                   angle: 0.12,
-                  child: const Icon(Icons.school, color: Color(0xFF0F172A), size: 36),
+                  child: Icon(Icons.school, color: context.c.text, size: 36),
                 ),
               ),
               Text(

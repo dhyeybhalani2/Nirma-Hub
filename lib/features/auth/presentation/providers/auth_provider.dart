@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/user_profile.dart';
+import '../../../../services/analytics_service.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
@@ -18,7 +19,11 @@ class AuthNotifier extends AsyncNotifier<UserProfile?> {
   @override
   FutureOr<UserProfile?> build() async {
     _repository = ref.watch(authRepositoryProvider);
-    return await _repository.getUserProfile();
+    final profile = await _repository.getUserProfile();
+    if (profile != null) {
+      AnalyticsService.recordUserActivity();
+    }
+    return profile;
   }
 
   Future<void> registerUser({

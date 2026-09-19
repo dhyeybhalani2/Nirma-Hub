@@ -32,10 +32,10 @@ import 'package:flutter/gestures.dart';
 import 'services/notification_service.dart';
 import 'features/notifications/presentation/providers/notifications_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
-import 'services/ad_service.dart';
 import 'features/notifications/presentation/screens/notification_settings_screen.dart';
-import 'widgets/ad_native_widget.dart';
-import 'widgets/ad_banner_widget.dart';
+import 'services/analytics_service.dart';
+import 'core/theme/app_theme.dart';
+import 'widgets/theme_toggle_button.dart';
 
 Route _createRoute(Widget page) {
   return CupertinoPageRoute(builder: (context) => page);
@@ -126,10 +126,11 @@ EventModel? getHolidayForDate(
   return null;
 }
 
-Color getCategoryColor(String category) {
-  if (category == "Exam") return const Color(0xFFC62828);
-  if (category == "Holiday") return const Color(0xFF10B981);
-  return const Color(0xFF1E3A8A); // Custom Dark Blue
+Color getCategoryColor(String category, [AppColors? c]) {
+  final dark = c?.isDark ?? false;
+  if (category == "Exam") return dark ? c!.accent : const Color(0xFFC62828);
+  if (category == "Holiday") return dark ? c!.success : const Color(0xFF10B981);
+  return dark ? const Color(0xFF93B4F5) : const Color(0xFF1E3A8A); // Custom Dark Blue
 }
 
 class NirmaHubApp extends StatelessWidget {
@@ -141,7 +142,7 @@ class NirmaHubApp extends StatelessWidget {
       title: 'Nirma Hub - Dashboard',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF1F4F9), // Slate 50
+        scaffoldBackgroundColor: context.c.bg, // Slate 50
         fontFamily: 'Manrope',
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFC62828)),
       ),
@@ -169,55 +170,23 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
     1,
   );
   DateTime? _lastPressedAt;
-  TimetablePassStatus _passStatus = AdService.getCachedPassStatus();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _refreshPassStatus();
+    AnalyticsService.recordUserActivity();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       NotificationService().checkAndRequestPermission(context);
     });
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _refreshPassStatus();
-    }
-  }
-
-  Future<void> _refreshPassStatus() async {
-    // 1. Immediately read cached status for 0ms instant UI update
-    final cached = AdService.getCachedPassStatus();
-    if (mounted) {
-      setState(() {
-        _passStatus = cached;
-      });
-    }
-    // 2. Fetch fresh status directly from remote/local
-    final status = await AdService.getTimetablePassStatus();
-    if (mounted) {
-      setState(() {
-        _passStatus = status;
-      });
-    }
-  }
-
   // Premium Design System Palette
-  final Color baseNavy = const Color(0xFF0F172A); // Slate 900
-  final Color primaryNavy = const Color(0xFF1E293B); // Slate 800
-  final Color textGray = const Color(0xFF64748B); // Slate 500
-  final Color borderGray = const Color(0xFFE2E8F0); // Slate 200
-  final Color bgSurface = const Color(0xFFF1F4F9); // Slate 100
-  final Color nirmaRed = const Color(0xFFC62828); // Brand Red
+  Color get baseNavy => context.c.text; // Slate 900
+  Color get primaryNavy => context.c.textSoft; // Slate 800
+  Color get textGray => context.c.textMuted; // Slate 500
+  Color get borderGray => context.c.border; // Slate 200
+  Color get bgSurface => context.c.bg; // Slate 100
+  Color get nirmaRed => context.c.accent; // Brand Red
 
   @override
   Widget build(BuildContext context) {
@@ -243,12 +212,12 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                 'Press back again to exit',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  color: Theme.of(context).colorScheme.surface,
+                  color: Colors.white,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               behavior: SnackBarBehavior.floating,
-              backgroundColor: baseNavy,
+              backgroundColor: context.c.hero,
               duration: const Duration(seconds: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -297,6 +266,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
             ),
           ),
           actions: [
+            const ThemeToggleButton(),
             IconButton(
               icon: ref
                   .watch(notificationsProvider)
@@ -308,7 +278,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                             notes.length.toString(),
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          backgroundColor: nirmaRed,
+                          backgroundColor: context.c.accentFill,
                           child: Icon(
                             CupertinoIcons.bell,
                             color: baseNavy,
@@ -334,7 +304,6 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                     builder: (_) => const NotificationsScreen(),
                   ),
                 );
-                _refreshPassStatus();
               },
             ),
             IconButton(
@@ -352,9 +321,9 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                       shape: BoxShape.circle,
                       color: hasImage 
                           ? Colors.transparent // Prevents the 0.5s black flash while NetworkImage loads
-                          : (isLoading ? const Color(0xFFF1F4F9) : baseNavy),
+                          : (isLoading ? context.c.fillStrong : context.c.hero),
                       border: Border.all(
-                        color: Colors.black.withValues(alpha: 0.15), // Single thin black outline
+                        color: context.c.text.withValues(alpha: 0.15), // Single thin outline
                         width: 1.0, 
                       ),
                       image: hasImage 
@@ -383,7 +352,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                                   return parts[0][0].toUpperCase();
                                 }(),
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.surface,
+                                  color: Colors.white,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
                                   fontFamily: 'Inter',
@@ -398,7 +367,6 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                   context,
                   CupertinoPageRoute(builder: (_) => const ProfileScreen()),
                 );
-                _refreshPassStatus();
               },
             ),
             SizedBox(width: 8),
@@ -431,7 +399,6 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                       onRefresh: () async {
                         ref.invalidate(allEventsProvider);
                         ref.invalidate(semesterConfigProvider);
-                        _refreshPassStatus();
                         await ref.read(allEventsProvider.future);
                         await ref.read(semesterConfigProvider.future);
                         await Future.delayed(const Duration(milliseconds: 300));
@@ -472,19 +439,12 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                               ValueListenableBuilder<int>(
                                 valueListenable: _currentCarouselIndex,
                                 builder: (context, currentIndex, child) {
-                                  return Column(
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          _buildCarouselDot(0, currentIndex),
-                                          SizedBox(width: 8),
-                                          _buildCarouselDot(1, currentIndex),
-                                        ],
-                                      ),
-                                      if (currentIndex == 0) ...[
-                                        _buildTimetablePassStatusBanner(),
-                                      ],
+                                      _buildCarouselDot(0, currentIndex),
+                                      SizedBox(width: 8),
+                                      _buildCarouselDot(1, currentIndex),
                                     ],
                                   );
                                 },
@@ -544,7 +504,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                             title: 'PYQs',
                             subtitle: 'Previous Year Question Papers',
                             icon: CupertinoIcons.book,
-                            color: const Color(0xFFC62828), // Nirma Red
+                            color: nirmaRed, // Nirma Red
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -568,21 +528,10 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                               );
                             },
                           ),
-                          const AdNativeCard(
-                            placementKey: 'home_below_most_imp',
-                            isMediumTemplate: true,
-                            margin: EdgeInsets.only(top: 16),
-                          ),
                           SizedBox(height: 40),
 
                           // --- Semester Progress Bar ---
                           _buildSemesterProgressBar(semesterConfig),
-
-                          // 🏷️ Banner below Semester Progress
-                          const AdBannerWidget(
-                            placementKey: 'home_below_semester_progress',
-                            margin: EdgeInsets.only(top: 24),
-                          ),
 
                           SizedBox(height: 80),
                         ],
@@ -709,11 +658,6 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                     ),
                   );
                 },
-              ),
-              const AdNativeCard(
-                placementKey: 'services_below_codeforces',
-                isMediumTemplate: true,
-                margin: EdgeInsets.only(top: 16),
               ),
             ],
           ),
@@ -849,7 +793,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                       const Color(0xFFF59E0B), // Yellow
                       const Color(0xFFE5202B), // Red
                     ];
-                    final themeColor = themes[index % 5];
+                    final themeColor = context.c.tint(themes[index % 5]);
                     
                     String fileExtension = 'PDF';
                     if (!file.url.toLowerCase().endsWith('.pdf') && !file.title.toLowerCase().endsWith('.pdf')) {
@@ -864,7 +808,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                              color: context.c.shadow.withValues(alpha: 0.02),
                               blurRadius: 10,
                               offset: const Offset(0, 6),
                             ),
@@ -1008,9 +952,9 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                               colors: [
-                                const Color(0xFFF1F4F9).withValues(alpha: 0.0),
-                                const Color(0xFFF1F4F9).withValues(alpha: 0.7),
-                                const Color(0xFFF1F4F9).withValues(alpha: 1.0),
+                                bgSurface.withValues(alpha: 0.0),
+                                bgSurface.withValues(alpha: 0.7),
+                                bgSurface.withValues(alpha: 1.0),
                               ],
                               stops: [0.0, 0.5, 1.0],
                             ),
@@ -1061,13 +1005,6 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
             );
           },
         ),
-
-          // 🎨 Native Ad below Recent Files
-          const AdNativeCard(
-            placementKey: 'home_below_recent_files',
-            isMediumTemplate: true,
-            margin: EdgeInsets.only(top: 24, bottom: 8),
-          ),
 
           SizedBox(height: 24),
           Text(
@@ -1287,66 +1224,6 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
     );
   }
 
-  Widget _buildTimetablePassStatusBanner() {
-    if (!_passStatus.isAdRequired) return const SizedBox.shrink();
-
-    final bool isUnlocked = _passStatus.isUnlocked;
-
-    return GestureDetector(
-      onTap: () async {
-        await Navigator.push(
-          context,
-          _createRoute(const NotificationSettingsScreen()),
-        );
-        _refreshPassStatus();
-      },
-      child: Container(
-        margin: const EdgeInsets.only(top: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isUnlocked 
-              ? const Color(0xFF10B981).withValues(alpha: 0.08)
-              : const Color(0xFFFEF2F2),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isUnlocked 
-                ? const Color(0xFF10B981).withValues(alpha: 0.25)
-                : const Color(0xFFFECACA),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isUnlocked ? Icons.alarm_on_rounded : Icons.notifications_off_outlined,
-              size: 15,
-              color: isUnlocked ? const Color(0xFF059669) : const Color(0xFFDC2626),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              isUnlocked
-                  ? 'Alerts Active • ${_passStatus.remainingText}'
-                  : 'Class Alerts Paused • Tap to Activate',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: isUnlocked ? const Color(0xFF065F46) : const Color(0xFF991B1B),
-                fontFamily: 'Manrope',
-              ),
-            ),
-            const SizedBox(width: 6),
-            Icon(
-              CupertinoIcons.chevron_forward,
-              size: 12,
-              color: isUnlocked ? const Color(0xFF059669) : const Color(0xFFDC2626),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildTimetableCard(List<EventModel> allEvents) {
     final isTimetableLoading = ref.watch(timetableLoadingProvider);
     final now = ref.watch(clockProvider).value ?? DateTime.now();
@@ -1518,10 +1395,10 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                   Expanded(
                     child: Text(
                       "Today is Holiday (${todayHoliday.title})",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF065F46),
+                        color: context.c.pick(const Color(0xFF065F46), const Color(0xFF6EE7B7)),
                         fontFamily: 'Manrope',
                       ),
                       maxLines: 1,
@@ -1658,8 +1535,8 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white,
+                            context.c.card.withValues(alpha: 0.0),
+                            context.c.card,
                           ],
                         ),
                       ),
@@ -2111,7 +1988,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: nirmaRed,
+                        color: context.c.accentFill,
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Text(
@@ -2119,7 +1996,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: Theme.of(context).colorScheme.surface,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -2216,9 +2093,9 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.white.withValues(alpha: 0.0),
-                              Colors.white.withValues(alpha: 0.7),
-                              Colors.white,
+                              context.c.card.withValues(alpha: 0.0),
+                              context.c.card.withValues(alpha: 0.7),
+                              context.c.card,
                             ],
                             stops: [0.0, 0.7, 1.0],
                           ),
@@ -2261,7 +2138,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
     String subject = "",
     bool isDynamic = false,
   }) {
-    Color catColor = getCategoryColor(category);
+    Color catColor = getCategoryColor(category, context.c);
 
     // LIVE EVENT COMPLETION ENGINE
     bool isCompleted = false;
@@ -2433,9 +2310,9 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildLegendItem(getCategoryColor("Exam"), 'Exam'),
+        _buildLegendItem(getCategoryColor("Exam", context.c), 'Exam'),
         SizedBox(width: 16),
-        _buildLegendItem(getCategoryColor("Holiday"), 'Holiday'),
+        _buildLegendItem(getCategoryColor("Holiday", context.c), 'Holiday'),
       ],
     );
   }
@@ -2479,7 +2356,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+              color: context.c.shadow.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
@@ -2549,7 +2426,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+              color: context.c.shadow.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
@@ -2579,12 +2456,16 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
                     height: 40,
                     decoration: BoxDecoration(
                       color: isHighlight
-                          ? itemColor
-                          : itemColor.withValues(alpha: 0.05),
+                          // A filled chip carries a white icon, so it needs the
+                          // deep brand tone rather than the light text tone.
+                          ? (itemColor == context.c.accent ? context.c.accentFill : itemColor)
+                          : itemColor.withValues(alpha: context.c.isDark ? 0.14 : 0.05),
                       borderRadius: BorderRadius.circular(12),
                       border: isHighlight
                           ? null
-                          : Border.all(color: itemColor.withValues(alpha: 0.1)),
+                          : Border.all(
+                              color: itemColor.withValues(alpha: context.c.isDark ? 0.3 : 0.1),
+                            ),
                     ),
                     child: Icon(
                       icon,
@@ -2684,7 +2565,9 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
       width: isSelected ? 24 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: isSelected ? baseNavy : borderGray,
+        // `hero` is a near-background surface in dark mode, so the active pill
+        // used to vanish. Text colour reads on both themes.
+        color: isSelected ? context.c.text : context.c.borderStrong,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -2703,11 +2586,11 @@ class _FullCalendarScreenState extends ConsumerState<FullCalendarScreen> {
   DateTime _selectedDate = DateTime.now();
   late DateTime _displayedMonth;
 
-  final Color baseNavy = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFE2E8F0);
-  final Color bgSurface = const Color(0xFFF1F4F9);
-  final Color nirmaRed = const Color(0xFFC62828);
+  Color get baseNavy => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.border;
+  Color get bgSurface => context.c.bg;
+  Color get nirmaRed => context.c.accent;
 
   @override
   void initState() {
@@ -2761,7 +2644,7 @@ class _FullCalendarScreenState extends ConsumerState<FullCalendarScreen> {
     String subject = "",
     bool isDynamic = false,
   }) {
-    Color catColor = getCategoryColor(category);
+    Color catColor = getCategoryColor(category, context.c);
 
     // LIVE EVENT COMPLETION ENGINE
     bool isCompleted = false;
@@ -3343,7 +3226,7 @@ class _FullCalendarScreenState extends ConsumerState<FullCalendarScreen> {
                                   height: 44,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? nirmaRed
+                                        ? context.c.accentFill
                                         : (hasExam
                                               ? nirmaRed.withValues(alpha: 0.1)
                                               : (hasHoliday
@@ -3417,7 +3300,7 @@ class _FullCalendarScreenState extends ConsumerState<FullCalendarScreen> {
                                                       decoration: BoxDecoration(
                                                         color: isSelected
                                                             ? Colors.white
-                                                            : nirmaRed,
+                                                            : context.c.accentFill,
                                                         shape: BoxShape.circle,
                                                       ),
                                                     ),
@@ -3669,12 +3552,12 @@ void showExamDetailsBottomSheet(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5202B).withValues(alpha: 0.1),
+                    color: context.c.pick(const Color(0xFFE5202B), const Color(0xFFFF6B6B)).withValues(alpha: context.c.isDark ? 0.18 : 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(
                     Icons.edit_document,
-                    color: Color(0xFFE5202B),
+                    color: context.c.pick(const Color(0xFFE5202B), const Color(0xFFFF6B6B)),
                     size: 24,
                   ),
                 ),
@@ -3717,13 +3600,15 @@ void showExamDetailsBottomSheet(
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [const Color(0xFFFFF0F2), const Color(0xFFFFE6E9)],
+                  colors: context.c.isDark
+                      ? [const Color(0xFF2A151B), const Color(0xFF331820)]
+                      : [const Color(0xFFFFF0F2), const Color(0xFFFFE6E9)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFFE5202B).withValues(alpha: 0.1),
+                  color: context.c.pick(const Color(0xFFE5202B), const Color(0xFFFF6B6B)).withValues(alpha: context.c.isDark ? 0.18 : 0.1),
                 ),
               ),
               child: ClipRRect(
@@ -3781,7 +3666,7 @@ void showExamDetailsBottomSheet(
                                   ),
                                   child: Icon(
                                     CupertinoIcons.calendar,
-                                    color: Color(0xFFE5202B),
+                                    color: context.c.pick(const Color(0xFFE5202B), const Color(0xFFFF6B6B)),
                                     size: 18,
                                   ),
                                 ),
@@ -3796,7 +3681,7 @@ void showExamDetailsBottomSheet(
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF6B7280),
+                                          color: context.c.textMuted,
                                         ),
                                       ),
                                       SizedBox(height: 2),
@@ -3805,7 +3690,7 @@ void showExamDetailsBottomSheet(
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFFE5202B),
+                                          color: context.c.pick(const Color(0xFFE5202B), const Color(0xFFFF6B6B)),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -3839,7 +3724,7 @@ void showExamDetailsBottomSheet(
                                   ),
                                   child: Icon(
                                     CupertinoIcons.time,
-                                    color: Color(0xFFE5202B),
+                                    color: context.c.pick(const Color(0xFFE5202B), const Color(0xFFFF6B6B)),
                                     size: 18,
                                   ),
                                 ),
@@ -3854,7 +3739,7 @@ void showExamDetailsBottomSheet(
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF6B7280),
+                                          color: context.c.textMuted,
                                         ),
                                       ),
                                       SizedBox(height: 2),
@@ -3863,7 +3748,7 @@ void showExamDetailsBottomSheet(
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFFE5202B),
+                                          color: context.c.pick(const Color(0xFFE5202B), const Color(0xFFFF6B6B)),
                                         ),
                                       ),
                                     ],
@@ -3962,7 +3847,7 @@ void showExamDetailsBottomSheet(
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF6B7280),
+                            color: context.c.textMuted,
                           ),
                         ),
                       ],
@@ -3999,7 +3884,7 @@ Widget _buildExamInfoRow(
       border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.6)),
       boxShadow: [
         BoxShadow(
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+          color: context.c.shadow.withValues(alpha: 0.02),
           blurRadius: 8,
           offset: const Offset(0, 2),
         ),
@@ -4025,7 +3910,7 @@ Widget _buildExamInfoRow(
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
+                  color: context.c.textMuted,
                 ),
               ),
               SizedBox(height: 2),
@@ -4145,7 +4030,7 @@ class _CustomDatePickerBottomSheetState
                 child: Text(
                   'Done',
                   style: TextStyle(
-                    color: const Color(0xFFC62828),
+                    color: context.c.accent,
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                   ),
@@ -4233,7 +4118,7 @@ class _CustomDatePickerBottomSheetState
                                 style: TextStyle(
                                   fontSize: 19,
                                   fontWeight: FontWeight.w900,
-                                  color: const Color(0xFFC62828),
+                                  color: context.c.accent,
                                   fontFamily: 'Manrope',
                                   decoration: TextDecoration.none,
                                 ),
@@ -4346,16 +4231,16 @@ class _PremiumSemesterProgressState extends State<PremiumSemesterProgress>
     }
 
     // Pixel-perfect Premium Colors
-    const Color trackColor = Color(0xFFF3F4F6);
-    const Color textGray = Color(0xFF64748B);
-    const Color baseNavy = Color(0xFF0F172A);
+    final Color trackColor = context.c.fillStrong;
+    final Color textGray = context.c.textMuted;
+    final Color baseNavy = context.c.text;
 
-    Color currentColor = const Color(0xFFC62828); // Nirma Hub Red
-    Color topGradientColor = const Color(0xFFE53935);
+    Color currentColor = context.c.pick(const Color(0xFFC62828), const Color(0xFFE23E3E)); // Nirma Hub Red
+    Color topGradientColor = context.c.pick(const Color(0xFFE53935), const Color(0xFFFF5A52));
 
     // Change to green after 90%
     if (progress >= 0.9) {
-      currentColor = const Color(0xFF10B981);
+      currentColor = context.c.pick(const Color(0xFF10B981), const Color(0xFF17C98A));
       topGradientColor = const Color(0xFF34D399);
     }
 
@@ -4441,7 +4326,7 @@ class _PremiumSemesterProgressState extends State<PremiumSemesterProgress>
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+            color: context.c.shadow.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 6),
           ),
@@ -4584,11 +4469,15 @@ class _PremiumSemesterProgressState extends State<PremiumSemesterProgress>
                         double columnLeft =
                             fillWidth -
                             30; // Center 60px bubble exactly over the crest
-                        Color bubbleBg = Color.lerp(
-                          Colors.white,
-                          currentColor,
-                          0.12,
-                        )!;
+                        // Light theme: a soft tint of the progress colour.
+                        // Dark theme: the same raised graphite as the rest of the
+                        // app, with the progress colour lifted so it reads on it.
+                        Color bubbleBg = context.c.isDark
+                            ? context.c.hero
+                            : Color.lerp(Colors.white, currentColor, 0.16)!;
+                        Color bubbleText = context.c.isDark
+                            ? Color.lerp(currentColor, Colors.white, 0.35)!
+                            : Color.lerp(currentColor, Colors.black, 0.15)!;
 
                         return Positioned.fill(
                           child: Stack(
@@ -4624,10 +4513,10 @@ class _PremiumSemesterProgressState extends State<PremiumSemesterProgress>
                                                   BorderRadius.circular(10),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: const Color(
-                                                    0xFF0F172A,
-                                                  ).withValues(alpha: 0.02),
-                                                  blurRadius: 4,
+                                                  color: Colors.black.withValues(
+                                                    alpha: context.c.isDark ? 0.45 : 0.08,
+                                                  ),
+                                                  blurRadius: 6,
                                                   offset: const Offset(0, 2),
                                                 ),
                                               ],
@@ -4637,7 +4526,7 @@ class _PremiumSemesterProgressState extends State<PremiumSemesterProgress>
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w900,
-                                                color: currentColor,
+                                                color: bubbleText,
                                                 fontFamily: 'Manrope',
                                               ),
                                             ),

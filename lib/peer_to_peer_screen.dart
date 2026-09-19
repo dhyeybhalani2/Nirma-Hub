@@ -12,6 +12,7 @@ import 'features/peer_to_peer/domain/peer_to_peer_item.dart';
 import 'features/peer_to_peer/presentation/providers/peer_to_peer_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/moderation/presentation/providers/moderation_provider.dart';
+import 'core/theme/app_theme.dart';
 
 class MarketFeedScreen extends ConsumerStatefulWidget {
   const MarketFeedScreen({super.key});
@@ -76,7 +77,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: context.c.card,
               title: const Text('Report Item', style: TextStyle(fontWeight: FontWeight.bold)),
               content: SingleChildScrollView(
                 child: Column(
@@ -92,7 +93,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                             selectedReason = value!;
                           });
                         },
-                        activeColor: const Color(0xFFC62828),
+                        activeColor: context.c.accent,
                       );
                     }),
                     if (selectedReason == 'Other')
@@ -115,7 +116,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+                  child: Text('Cancel', style: TextStyle(color: context.c.textMuted)),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -147,7 +148,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: context.c.accentFill, foregroundColor: Colors.white),
                   child: const Text('Submit'),
                 ),
               ],
@@ -163,13 +164,13 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: context.c.card,
           title: const Text('Block User?', style: TextStyle(fontWeight: FontWeight.bold)),
           content: const Text('Are you sure you want to block this user? You will no longer see their items.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+              child: Text('Cancel', style: TextStyle(color: context.c.textMuted)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -192,7 +193,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: context.c.accentFill, foregroundColor: Colors.white),
               child: const Text('Block'),
             ),
           ],
@@ -204,9 +205,9 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
     @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: context.c.fillStrong,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.c.card,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -230,10 +231,10 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                         _searchQuery = "";
                       });
                     },
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 38,
                       height: 38,
-                      child: Icon(CupertinoIcons.arrow_left, color: Color(0xFF0F172A), size: 18),
+                      child: Icon(CupertinoIcons.arrow_left, color: context.c.text, size: 18),
                     ),
                   ),
                 ),
@@ -248,10 +249,10 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 38,
                       height: 38,
-                      child: Icon(CupertinoIcons.arrow_left, color: Color(0xFF0F172A), size: 18),
+                      child: Icon(CupertinoIcons.arrow_left, color: context.c.text, size: 18),
                     ),
                   ),
                 ),
@@ -261,23 +262,23 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
           ? Container(
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9), // Flat grey background
+                color: context.c.fillStrong, // Flat grey background
                 borderRadius: BorderRadius.circular(24), // Pill shape
               ),
               child: TextField(
                 controller: _searchController,
                 autofocus: true,
                 onChanged: (value) => setState(() => _searchQuery = value),
-                style: const TextStyle(color: Color(0xFF0F172A), fontSize: 15),
-                cursorColor: const Color(0xFFC62828),
+                style: TextStyle(color: context.c.text, fontSize: 15),
+                cursorColor: context.c.accent,
                 decoration: InputDecoration(
                   hintText: 'Search items...',
-                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
+                  hintStyle: TextStyle(color: context.c.textFaint, fontSize: 15),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(CupertinoIcons.search, color: Color(0xFF94A3B8), size: 18),
+                  prefixIcon: Icon(CupertinoIcons.search, color: context.c.textFaint, size: 18),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   suffixIcon: _searchController.text.isNotEmpty ? IconButton(
-                    icon: const Icon(CupertinoIcons.clear_circled_solid, color: Color(0xFF94A3B8), size: 18),
+                    icon: Icon(CupertinoIcons.clear_circled_solid, color: context.c.textFaint, size: 18),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
@@ -286,12 +287,12 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                 ),
               ),
             )
-          : const Text(
+          : Text(
               'Peer to Peer',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
+                color: context.c.text,
                 letterSpacing: -0.5,
                 fontFamily: 'Manrope',
               ),
@@ -306,10 +307,10 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: () => setState(() => _isSearching = true),
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 44,
                     height: 44,
-                    child: Icon(CupertinoIcons.search, color: Color(0xFF0F172A), size: 22),
+                    child: Icon(CupertinoIcons.search, color: context.c.text, size: 22),
                   ),
                 ),
               ),
@@ -318,19 +319,19 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: context.c.border, width: 1)),
             ),
             child: TabBar(
               controller: _tabController,
               isScrollable: false,
               splashFactory: NoSplash.splashFactory,
               indicatorSize: TabBarIndicatorSize.label,
-              labelColor: const Color(0xFFC62828),
-              unselectedLabelColor: const Color(0xFF64748B),
+              labelColor: context.c.accent,
+              unselectedLabelColor: context.c.textMuted,
               labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, fontFamily: 'Manrope'),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFamily: 'Manrope'),
-              indicatorColor: const Color(0xFFC62828),
+              indicatorColor: context.c.accent,
               indicatorWeight: 3,
               dividerColor: Colors.transparent,
               overlayColor: WidgetStateProperty.all(Colors.transparent),
@@ -354,7 +355,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
       floatingActionButton: _tabController.index != 2 
           ? FloatingActionButton.extended(
               onPressed: () => _showSellItemDialog(context),
-              backgroundColor: const Color(0xFF0F172A),
+              backgroundColor: context.c.hero,
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text(
                 "Sell Item",
@@ -375,7 +376,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
     
     return asyncItems.when(
       loading: () => const CustomScrollView(slivers: [P2PSkeleton()]),
-      error: (err, stack) => Center(child: Text("Error loading items: $err", style: const TextStyle(color: Colors.red))),
+      error: (err, stack) => Center(child: Text("Error loading items: $err", style: TextStyle(color: context.c.danger))),
       data: (items) {
         final filteredItems = _getFilteredItems(items, tabIndex);
         
@@ -391,16 +392,16 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.c.card,
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: context.c.border),
                       ),
-                      child: const Icon(Icons.storefront_outlined, size: 48, color: Color(0xFF94A3B8)),
+                      child: Icon(Icons.storefront_outlined, size: 48, color: context.c.textFaint),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       "No items found.",
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 16, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: context.c.textMuted, fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -413,7 +414,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
           onRefresh: () async {
             return ref.refresh(peerToPeerItemsProvider.future);
           },
-          color: const Color(0xFFC62828),
+          color: context.c.accent,
           child: ListView.builder(
             padding: const EdgeInsets.only(top: 16, bottom: 100),
             itemCount: filteredItems.length,
@@ -441,9 +442,9 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.c.card,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.5), width: 1),
+          border: Border.all(color: context.c.border.withValues(alpha: 0.5), width: 1),
           boxShadow: [
             BoxShadow(color: const Color(0xFF0F172A).withValues(alpha: 0.02),
               blurRadius: 12,
@@ -468,8 +469,8 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                         errorWidget: (context, url, error) => Container(
                           width: 100,
                           height: 100,
-                          color: const Color(0xFFF1F5F9),
-                          child: const Icon(Icons.image_not_supported, color: Color(0xFF94A3B8)),
+                          color: context.c.fillStrong,
+                          child: Icon(Icons.image_not_supported, color: context.c.textFaint),
                         ),
                       )
                     : Image.file(
@@ -480,8 +481,8 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                         errorBuilder: (context, error, stackTrace) => Container(
                           width: 100,
                           height: 100,
-                          color: const Color(0xFFF1F5F9),
-                          child: const Icon(Icons.broken_image, color: Color(0xFF94A3B8)),
+                          color: context.c.fillStrong,
+                          child: Icon(Icons.broken_image, color: context.c.textFaint),
                         ),
                       ),
                 ),
@@ -513,10 +514,10 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                       Expanded(
                         child: Text(
                           item.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: context.c.text,
                             height: 1.2,
                           ),
                           maxLines: 2,
@@ -527,15 +528,15 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF2F2),
+                          color: context.c.accentSoft,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '₹${item.price.toStringAsFixed(0)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFC62828),
+                            color: context.c.accent,
                           ),
                         ),
                       ),
@@ -544,12 +545,12 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.person_outline, size: 16, color: Color(0xFF64748B)),
+                      Icon(Icons.person_outline, size: 16, color: context.c.textMuted),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           item.sellerName,
-                          style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
+                          style: TextStyle(fontSize: 14, color: context.c.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -559,11 +560,11 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 16, color: Color(0xFF64748B)),
+                      Icon(Icons.access_time, size: 16, color: context.c.textMuted),
                       const SizedBox(width: 6),
                       Text(
                         item.createdAt.toString().substring(0, 10),
-                        style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
+                        style: TextStyle(fontSize: 14, color: context.c.textSecondary),
                       ),
                     ],
                   ),
@@ -591,8 +592,8 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
           maxChildSize: 1.0,
           builder: (_, controller) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: context.c.card,
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
               ),
               clipBehavior: Clip.antiAlias,
@@ -612,9 +613,9 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                           errorWidget: (context, url, error) => Container(
                             height: 300,
                             width: double.infinity,
-                            color: const Color(0xFFF1F5F9),
-                            child: const Center(
-                              child: Icon(Icons.image_not_supported, color: Color(0xFF94A3B8), size: 64),
+                            color: context.c.fillStrong,
+                            child: Center(
+                              child: Icon(Icons.image_not_supported, color: context.c.textFaint, size: 64),
                             ),
                           ),
                         )
@@ -626,9 +627,9 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                           errorBuilder: (context, error, stackTrace) => Container(
                             height: 300,
                             width: double.infinity,
-                            color: const Color(0xFFF1F5F9),
-                            child: const Center(
-                              child: Icon(Icons.broken_image, color: Color(0xFF94A3B8), size: 64),
+                            color: context.c.fillStrong,
+                            child: Center(
+                              child: Icon(Icons.broken_image, color: context.c.textFaint, size: 64),
                             ),
                           ),
                         ),
@@ -638,7 +639,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                         right: 68,
                         child: PopupMenuButton<String>(
                           padding: EdgeInsets.zero,
-                          color: Colors.white,
+                          color: context.c.card,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 8,
                           position: PopupMenuPosition.under,
@@ -650,23 +651,23 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                             }
                           },
                           itemBuilder: (context) => [
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'report',
                               child: Row(
                                 children: [
-                                  Icon(Icons.flag_outlined, size: 20, color: Color(0xFF0F172A)),
+                                  Icon(Icons.flag_outlined, size: 20, color: context.c.text),
                                   SizedBox(width: 12),
-                                  Text('Report Item', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                  Text('Report Item', style: TextStyle(fontWeight: FontWeight.w600, color: context.c.text)),
                                 ],
                               ),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'block',
                               child: Row(
                                 children: [
-                                  Icon(Icons.block, size: 20, color: Color(0xFFC62828)),
+                                  Icon(Icons.block, size: 20, color: context.c.accent),
                                   SizedBox(width: 12),
-                                  Text('Block User', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFC62828))),
+                                  Text('Block User', style: TextStyle(fontWeight: FontWeight.w600, color: context.c.accent)),
                                 ],
                               ),
                             ),
@@ -712,14 +713,14 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                                       child: item.imagePath.startsWith('http')
                                           ? CachedNetworkImage(
                                               imageUrl: item.imagePath,
-                                              errorWidget: (context, url, error) => const Center(
-                                                child: Icon(Icons.image_not_supported, color: Color(0xFF94A3B8), size: 64),
+                                              errorWidget: (context, url, error) => Center(
+                                                child: Icon(Icons.image_not_supported, color: context.c.textFaint, size: 64),
                                               ),
                                             )
                                           : Image.file(
                                               File(item.imagePath),
-                                              errorBuilder: (context, error, stackTrace) => const Center(
-                                                child: Icon(Icons.broken_image, color: Color(0xFF94A3B8), size: 64),
+                                              errorBuilder: (context, error, stackTrace) => Center(
+                                                child: Icon(Icons.broken_image, color: context.c.textFaint, size: 64),
                                               ),
                                             ),
                                     ),
@@ -760,10 +761,10 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                           Expanded(
                             child: Text(
                               item.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF0F172A),
+                                color: context.c.text,
                                 letterSpacing: -0.5,
                               ),
                             ),
@@ -771,35 +772,35 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEF2F2),
+                              color: context.c.accentSoft,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               "₹" + item.price.toStringAsFixed(0),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFC62828),
+                                color: context.c.accent,
                               ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         "Description",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.c.text),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         item.description,
-                        style: const TextStyle(fontSize: 16, color: Color(0xFF475569), height: 1.5),
+                        style: TextStyle(fontSize: 16, color: context.c.textSecondary, height: 1.5),
                       ),
                       const SizedBox(height: 32),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: context.c.fill,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
@@ -808,25 +809,25 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(10),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFEF2F2),
+                                  decoration: BoxDecoration(
+                                    color: context.c.accentSoft,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.person_outline, size: 24, color: Color(0xFFC62828)),
+                                  child: Icon(Icons.person_outline, size: 24, color: context.c.accent),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         "Owner Name",
-                                        style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                        style: TextStyle(fontSize: 13, color: context.c.textMuted),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         item.sellerName,
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.c.text),
                                       ),
                                     ],
                                   ),
@@ -834,33 +835,33 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                               ],
                             ),
                             if (!item.isSold) ...[
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                                child: Divider(height: 1, color: context.c.border),
                               ),
                               Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(10),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFFEF2F2),
+                                    decoration: BoxDecoration(
+                                      color: context.c.accentSoft,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.phone_outlined, size: 24, color: Color(0xFFC62828)),
+                                    child: Icon(Icons.phone_outlined, size: 24, color: context.c.accent),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
+                                        Text(
                                           "Contact Number",
-                                          style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                          style: TextStyle(fontSize: 13, color: context.c.textMuted),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           item.contactNumber.isNotEmpty ? item.contactNumber : "Not provided",
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.c.text),
                                         ),
                                       ],
                                     ),
@@ -874,12 +875,12 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                       const SizedBox(height: 32),
                       Row(
                         children: [
-                          const Icon(Icons.access_time_filled, size: 22, color: Color(0xFF94A3B8)),
+                          Icon(Icons.access_time_filled, size: 22, color: context.c.textFaint),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               "Posted on: " + item.createdAt.toString().substring(0, 10),
-                              style: const TextStyle(fontSize: 16, color: Color(0xFF475569)),
+                              style: TextStyle(fontSize: 16, color: context.c.textSecondary),
                             ),
                           ),
                         ],
@@ -895,7 +896,7 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                                   Navigator.pop(context);
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF16A34A),
+                                  backgroundColor: context.c.successFill,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -911,8 +912,8 @@ class _MarketFeedScreenState extends ConsumerState<MarketFeedScreen> with Single
                                   Navigator.pop(context);
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFEF2F2),
-                                  foregroundColor: const Color(0xFFC62828),
+                                  backgroundColor: context.c.accentSoft,
+                                  foregroundColor: context.c.accent,
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -985,8 +986,10 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
     super.dispose();
   }
 
-  Color get currentColor => const Color(0xFFC62828);
-  Color get softColor => const Color(0xFFC62828).withOpacity(0.1);
+  Color get currentColor => context.c.accent;
+  /// Same hue as [currentColor] but deep enough to carry a white label.
+  Color get currentFill => context.c.accentFill;
+  Color get softColor => context.c.accent.withValues(alpha: 0.1);
 
   Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? hintText, bool readOnly = false, VoidCallback? onTap, String? errorText, TextInputType? keyboardType, int? maxLength}) {
     return Padding(
@@ -1001,35 +1004,35 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
         onChanged: (val) {
           if (hasAttemptedSubmit) setState(() {});
         },
-        cursorColor: const Color(0xFF0F172A),
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF0F172A)),
+        cursorColor: context.c.text,
+        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: context.c.text),
         decoration: InputDecoration(
           labelText: label,
           counterText: "",
           labelStyle: TextStyle(
             fontSize: 16,
-            color: errorText != null ? const Color(0xFFC62828) : const Color(0xFF64748B),
+            color: errorText != null ? context.c.accent : context.c.textMuted,
           ),
           floatingLabelStyle: TextStyle(
             fontSize: 16,
             color: WidgetStateColor.resolveWith((states) {
-              if (errorText != null) return const Color(0xFFC62828);
+              if (errorText != null) return context.c.accent;
               if (states.contains(WidgetState.focused)) return currentColor;
-              return const Color(0xFF0F172A);
+              return context.c.text;
             }),
             fontWeight: FontWeight.w600,
           ),
           hintText: hintText,
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+          hintStyle: TextStyle(color: context.c.textFaint, fontSize: 14),
           floatingLabelBehavior: FloatingLabelBehavior.always,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: context.c.card,
           errorText: errorText,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? Colors.red : const Color(0xFFE2E8F0))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? Colors.red : Colors.black)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? context.c.danger : context.c.border)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? context.c.danger : context.c.text)),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: currentColor, width: 2.0)),
-          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
-          focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.c.danger)),
+          focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.c.danger, width: 1.5)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
@@ -1043,8 +1046,8 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
     return Container(
       margin: const EdgeInsets.only(top: kToolbarHeight),
       padding: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF1F5F9),
+      decoration: BoxDecoration(
+        color: context.c.fillStrong,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -1058,7 +1061,7 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFE2E6EE),
+                color: context.c.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1085,7 +1088,7 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1094,7 +1097,7 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F1A2C),
+                          color: context.c.text,
                           fontFamily: 'Manrope',
                         ),
                       ),
@@ -1105,14 +1108,14 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E6EE).withOpacity(0.5),
+                    color: context.c.border.withOpacity(0.5),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
-                      color: Color(0xFF0F1A2C),
+                      color: context.c.text,
                       size: 16,
                     ),
                     onPressed: () => Navigator.pop(context),
@@ -1145,7 +1148,7 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Manrope',
-                        color: (hasAttemptedSubmit && selectedImagePath == null) ? const Color(0xFFC62828) : const Color(0xFF64748B),
+                        color: (hasAttemptedSubmit && selectedImagePath == null) ? context.c.accent : context.c.textMuted,
                       ),
                     ),
                   ),
@@ -1169,10 +1172,10 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
                       height: 120,
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.c.card,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: (hasAttemptedSubmit && selectedImagePath == null) ? Colors.red : const Color(0xFFE2E8F0), 
+                          color: (hasAttemptedSubmit && selectedImagePath == null) ? context.c.danger : context.c.border, 
                           style: BorderStyle.solid
                         ),
                       ),
@@ -1184,9 +1187,9 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
                           : Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_photo_alternate_outlined, size: 36, color: const Color(0xFF94A3B8)),
+                                Icon(Icons.add_photo_alternate_outlined, size: 36, color: context.c.textFaint),
                                 const SizedBox(height: 8),
-                                const Text("Tap to upload image", style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                Text("Tap to upload image", style: TextStyle(color: context.c.textMuted, fontWeight: FontWeight.w600)),
                               ],
                             ),
                     ),
@@ -1231,21 +1234,21 @@ class _SellItemBottomSheetState extends State<_SellItemBottomSheet> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text("Error: $e", style: const TextStyle(color: Colors.white)),
-                                backgroundColor: const Color(0xFFC62828),
+                                backgroundColor: context.c.accentFill,
                               ),
                             );
                           });
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text("Please fill out all required fields.", style: TextStyle(color: Colors.white)),
-                              backgroundColor: Color(0xFFC62828),
+                              backgroundColor: context.c.accentFill,
                             ),
                           );
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: currentColor,
+                        backgroundColor: currentFill,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../core/theme/app_theme.dart';
 
 class ContributionBottomSheet extends StatelessWidget {
   final String subjectName;
@@ -165,12 +166,12 @@ class ContributionBottomSheet extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.mail_rounded, color: Theme.of(context).colorScheme.surface, size: 20),
+                  Icon(Icons.mail_rounded, color: Colors.white, size: 20),
                   SizedBox(width: 8),
                   Text(
                     "Mail us your materials",
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.surface,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       fontFamily: 'Manrope',
@@ -188,7 +189,7 @@ class ContributionBottomSheet extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.c.fill,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
             ),
@@ -204,7 +205,7 @@ class ContributionBottomSheet extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF334155),
+                        color: context.c.textSecondary,
                         fontFamily: 'Manrope',
                       ),
                     ),

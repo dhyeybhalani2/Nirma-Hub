@@ -12,14 +12,11 @@ import 'notes_screen.dart';
 import 'widgets/premium_touch_button.dart';
 import 'widgets/skeleton_loaders.dart';
 import 'services/analytics_service.dart';
-import 'widgets/ad_banner_widget.dart';
-import 'widgets/ad_native_widget.dart';
-import 'services/ad_service.dart';
+import 'core/theme/app_theme.dart';
 
 // ─────────────────────────────────────────────
 // Design System Tokens
 // ─────────────────────────────────────────────
-const Color _nirmaRed = Color(0xFFC62828);
 
 class MostImpScreen extends ConsumerStatefulWidget {
   const MostImpScreen({super.key});
@@ -143,9 +140,10 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
 
   Color _getColorForSubject(String name) {
     final hash = name.hashCode.abs();
+    if (context.c.isDark) return _getIconColorForSubject(name).withValues(alpha: 0.16);
     final colors = [
       const Color(0xFFE8F5E9), const Color(0xFFE3F2FD), const Color(0xFFF3E5F5),
-      const Color(0xFFFFF3E0), const Color(0xFFFFF8E1), const Color(0xFFE0F7FA),
+      context.c.warningSoft, context.c.warningSoft, const Color(0xFFE0F7FA),
       const Color(0xFFFCE4EC), const Color(0xFFE8EAF6), const Color(0xFFFBE9E7)
     ];
     return colors[hash % colors.length];
@@ -158,7 +156,7 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
       const Color(0xFFF57C00), const Color(0xFFFBC02D), const Color(0xFF0097A7),
       const Color(0xFFC2185B), const Color(0xFF3F51B5), const Color(0xFFD84315)
     ];
-    return colors[hash % colors.length];
+    return context.c.tint(colors[hash % colors.length]);
   }
 
   @override
@@ -250,7 +248,7 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
                   ),
                 )
               : RefreshIndicator(
-                  color: _nirmaRed,
+                  color: context.c.accent,
                   onRefresh: () => _fetchDynamicSubjects(academicYear, branch),
                   child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -278,7 +276,7 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
                                       borderRadius: BorderRadius.circular(24),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+                                          color: context.c.shadow.withValues(alpha: 0.02),
                                           blurRadius: 10,
                                           offset: const Offset(0, 6),
                                         ),
@@ -297,8 +295,8 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
                                       ),
                                       clipBehavior: Clip.antiAlias,
                                       child: InkWell(
-                                        splashColor: _nirmaRed.withValues(alpha: 0.10),
-                                        highlightColor: _nirmaRed.withValues(alpha: 0.05),
+                                        splashColor: context.c.accent.withValues(alpha: 0.10),
+                                        highlightColor: context.c.accent.withValues(alpha: 0.05),
                                         onTap: () {
                                           Future.delayed(const Duration(milliseconds: 120), () {
                                             Navigator.push(
@@ -389,7 +387,7 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
                                               ),
 
                                               // Trailing Chevron
-                                              const Icon(CupertinoIcons.chevron_forward, color: Color(0xFFCBD5E1), size: 20),
+                                              Icon(CupertinoIcons.chevron_forward, color: context.c.borderStrong, size: 20),
                                             ],
                                           ),
                                         ),
@@ -399,20 +397,6 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
                                 ),
                               );
 
-                              final interval = AdService().nativeAdInterval;
-                              if ((index + 1) % interval == 0 && index != filteredSubjects.length - 1) {
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    subjectCard,
-                                    const AdNativeCard(
-                                      placementKey: 'subjects_in_between',
-                                      isMediumTemplate: false,
-                                      margin: EdgeInsets.only(bottom: 12),
-                                    ),
-                                  ],
-                                );
-                              }
                               return subjectCard;
                             },
                             childCount: filteredSubjects.length,
@@ -430,7 +414,7 @@ class _MostImpScreenState extends ConsumerState<MostImpScreen> {
     return TextField(
       onChanged: (val) => setState(() => _searchQuery = val),
       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface, fontFamily: 'Manrope'),
-      cursorColor: _nirmaRed,
+      cursorColor: context.c.accent,
       decoration: InputDecoration(
         hintText: 'Search subjects or codes...',
         hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 15),
@@ -655,7 +639,7 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
           ],
         ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: context.c.hero,
         duration: const Duration(seconds: 3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
@@ -734,10 +718,10 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: _nirmaRed.withValues(alpha: 0.08),
+                color: context.c.accent.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(CupertinoIcons.doc_text, size: 48, color: _nirmaRed),
+              child: Icon(CupertinoIcons.doc_text, size: 48, color: context.c.accent),
             ),
             const SizedBox(height: 20),
             Text(
@@ -872,12 +856,12 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _nirmaRed.withValues(alpha: 0.1),
+                        color: context.c.accent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         "M${modIndex + 1}",
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: _nirmaRed),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: context.c.accent),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -905,9 +889,9 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFFBEB),
+                              color: context.c.warningSoft,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFDE68A)),
+                              border: Border.all(color: context.c.warningBorder),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -918,12 +902,12 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         "Master Strategy",
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w900,
-                                          color: Color(0xFFB45309),
+                                          color: context.c.warningText,
                                           letterSpacing: 0.5,
                                         ),
                                       ),
@@ -954,26 +938,32 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (topicTitle.isNotEmpty) ...[
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8, bottom: 8),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.label_important_outline, size: 14, color: _nirmaRed),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        topicTitle.toUpperCase(),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w900,
-                                          color: theme.colorScheme.onSurfaceVariant,
-                                          letterSpacing: 0.8,
+                                if (topicTitle.isNotEmpty) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8, bottom: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 1.0),
+                                          child: Icon(Icons.label_important_outline, size: 14, color: context.c.accent),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            topicTitle.toUpperCase(),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                              color: theme.colorScheme.onSurfaceVariant,
+                                              letterSpacing: 0.8,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
 
                               // Questions List
                               ...questions.map((q) => _buildQuestionItem(q, theme)),
@@ -988,8 +978,6 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
             ),
           );
         }),
-        const SizedBox(height: 16),
-        const Center(child: AdBannerWidget(placementKey: 'most_imp_screen')),
         const SizedBox(height: 24),
       ],
     );
@@ -1058,13 +1046,13 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
               // Badges
               ...badges.map((b) {
                 final bStr = b.toString();
-                Color bColor = const Color(0xFF2563EB); // blue default
+                Color bColor = context.c.tint(const Color(0xFF2563EB)); // blue default
                 if (bStr.toLowerCase().contains('high') || bStr.toLowerCase().contains('top') || bStr.toLowerCase().contains('fire')) {
-                  bColor = const Color(0xFFDC2626);
+                  bColor = context.c.tint(const Color(0xFFDC2626));
                 } else if (bStr.toLowerCase().contains('diagram') || bStr.toLowerCase().contains('draw')) {
-                  bColor = const Color(0xFF7C3AED);
+                  bColor = context.c.tint(const Color(0xFF7C3AED));
                 } else if (bStr.toLowerCase().contains('rare') || bStr.toLowerCase().contains('unique')) {
-                  bColor = const Color(0xFF0891B2);
+                  bColor = context.c.tint(const Color(0xFF0891B2));
                 }
 
                 return Container(
@@ -1099,7 +1087,7 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: isRecent ? const Color(0xFF059669) : theme.colorScheme.onSurfaceVariant,
+                      color: isRecent ? context.c.pick(const Color(0xFF059669), const Color(0xFF34D399)) : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 );
@@ -1117,16 +1105,16 @@ class _ImpSubjectDetailScreenState extends State<ImpSubjectDetailScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF2563EB).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
+                        border: Border.all(color: context.c.info.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.menu_book_rounded, size: 11, color: Color(0xFF2563EB)),
+                          Icon(Icons.menu_book_rounded, size: 11, color: context.c.info),
                           const SizedBox(width: 4),
                           Text(
                             pageRef,
-                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
+                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: context.c.info),
                           ),
                         ],
                       ),

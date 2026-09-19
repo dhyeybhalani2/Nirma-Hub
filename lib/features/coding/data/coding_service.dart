@@ -155,6 +155,15 @@ class CodingService {
       final currentProfile = await getCurrentCodingProfile();
       if (currentProfile == null) return false;
 
+      // If Codeforces is also not linked, remove the profile row entirely
+      final hasCodeforces = currentProfile.codeforcesUsername != null &&
+          currentProfile.codeforcesUsername!.trim().isNotEmpty;
+
+      if (!hasCodeforces) {
+        await _supabase.from('coding_profiles').delete().eq('id', userProfile.id);
+        return true;
+      }
+
       final Map<String, dynamic> data = {
         'id': userProfile.id,
         'full_name': userProfile.fullName,
@@ -185,6 +194,15 @@ class CodingService {
     try {
       final currentProfile = await getCurrentCodingProfile();
       if (currentProfile == null) return false;
+
+      // If LeetCode is also not linked, remove the profile row entirely
+      final hasLeetCode = currentProfile.leetcodeUsername != null &&
+          currentProfile.leetcodeUsername!.trim().isNotEmpty;
+
+      if (!hasLeetCode) {
+        await _supabase.from('coding_profiles').delete().eq('id', userProfile.id);
+        return true;
+      }
 
       final Map<String, dynamic> data = {
         'id': userProfile.id,

@@ -7,8 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'notes_screen.dart'; // For PdfViewerScreen
 import 'package:url_launcher/url_launcher.dart';
-import 'widgets/ad_native_widget.dart';
-import 'widgets/ad_banner_widget.dart';
+import 'core/theme/app_theme.dart';
 
 class UniversityUpdatesScreen extends ConsumerStatefulWidget {
   const UniversityUpdatesScreen({super.key});
@@ -18,12 +17,12 @@ class UniversityUpdatesScreen extends ConsumerStatefulWidget {
 }
 
 class _UniversityUpdatesScreenState extends ConsumerState<UniversityUpdatesScreen> {
-  final Color nirmaNavy = const Color(0xFF1A2B48);
-  final Color nirmaRed = const Color(0xFFC62828);
-  final Color textDark = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFCBD5E1);
-  final Color scaffoldBg = const Color(0xFFF1F4F9);
+  Color get nirmaNavy => context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0));
+  Color get nirmaRed => context.c.accent;
+  Color get textDark => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.borderStrong;
+  Color get scaffoldBg => context.c.bg;
 
   bool _isLoading = true;
   List<Map<String, dynamic>> _updates = [];
@@ -308,7 +307,7 @@ class _UniversityUpdatesScreenState extends ConsumerState<UniversityUpdatesScree
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w700,
-                                              color: Color(0xFF1A2B48),
+                                              color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0)),
                                               fontFamily: 'Manrope',
                                             ),
                                           ),
@@ -322,29 +321,10 @@ class _UniversityUpdatesScreenState extends ConsumerState<UniversityUpdatesScree
                           ),
                         );
 
-                        if (index == 0) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              cardWidget,
-                              const AdNativeCard(
-                                placementKey: 'updates_below_latest',
-                                isMediumTemplate: true,
-                                margin: EdgeInsets.only(bottom: 20),
-                              ),
-                            ],
-                          );
-                        }
                         return cardWidget;
                       },
                     ),
             ),
-      bottomNavigationBar: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: 6.0),
-          child: AdBannerWidget(placementKey: 'university_updates'),
-        ),
-      ),
     );
   }
 }

@@ -17,6 +17,7 @@ import 'help_center_screen.dart';
 import 'provide_feedback_screen.dart';
 import 'features/notifications/presentation/screens/notification_settings_screen.dart';
 import 'services/rating_service.dart';
+import 'core/theme/app_theme.dart';
 
 IconData _getBranchIcon(String branchName) {
   switch (branchName) {
@@ -138,7 +139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                    color: context.c.shadow.withValues(alpha: 0.02),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -195,7 +196,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.02),
+                      color: context.c.shadow.withValues(alpha: 0.02),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -338,12 +339,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // Theme Colors
-  final Color nirmaNavy = const Color(0xFF1A2B48);
-  final Color nirmaRed = const Color(0xFFC62828);
-  final Color textDark = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFCBD5E1);
-  final Color scaffoldBg = const Color(0xFFF1F4F9);
+  Color get nirmaNavy => context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0));
+  Color get nirmaRed => context.c.accent;
+  Color get textDark => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.borderStrong;
+  Color get scaffoldBg => context.c.bg;
 
   @override
   Widget build(BuildContext context) {
@@ -499,15 +500,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                  gradient: LinearGradient(
+                    colors: [context.c.hero, context.c.heroBorder],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: context.c.heroBorder),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.15),
+                      color: context.c.shadow.withValues(alpha: context.c.isDark ? 0.45 : 0.15),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -524,13 +526,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             height: 76,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
-                              border: Border.all(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.2), width: 1.5),
+                              color: Colors.white.withValues(alpha: 0.1),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
+                                  color: Colors.black.withValues(alpha: 0.2),
                                   blurRadius: 16,
-                                  spreadRadius: 2,
+                                  spreadRadius: 1,
                                 ),
                               ],
                               image: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
@@ -555,7 +557,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                               return parts[0][0].toUpperCase();
                                             }(),
                                             style: TextStyle(
-                                              color: Theme.of(context).colorScheme.surface,
+                                              color: Colors.white,
                                               fontSize: 32,
                                               fontWeight: FontWeight.w800,
                                               fontFamily: 'Manrope',
@@ -572,12 +574,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.primary,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFF1E293B), width: 2),
+                                border: Border.all(color: context.c.heroBorder, width: 2),
                               ),
                               child: Icon(
                                 Icons.camera_alt,
                                 size: 12,
-                                color: Theme.of(context).colorScheme.surface,
+                                color: Theme.of(context).colorScheme.onPrimary,
                               ),
                             ),
                           ),
@@ -614,7 +616,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
-                              color: Theme.of(context).colorScheme.surface,
+                              color: Colors.white,
                               fontFamily: 'Manrope',
                               letterSpacing: -0.5,
                             ),
@@ -627,7 +629,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                               fontFamily: 'Inter',
                             ),
                             maxLines: 1,
@@ -648,24 +650,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             },
                             enableRipple: true,
                             borderRadius: BorderRadius.circular(20),
-                            backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.1),
+                            backgroundColor: Colors.white.withValues(alpha: 0.1),
                             splashColor: Colors.white.withValues(alpha: 0.2),
                             highlightColor: Colors.white.withValues(alpha: 0.1),
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.15)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                               ),
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.edit_rounded, color: Theme.of(context).colorScheme.surface, size: 14),
+                                  Icon(Icons.edit_rounded, color: Colors.white, size: 14),
                                   SizedBox(width: 6),
                                   Text(
                                     'Edit Profile',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.surface,
+                                      color: Colors.white,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       fontFamily: 'Inter',
@@ -937,7 +939,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ],
                   ),
                   child: Material(
-                    color: nirmaRed,
+                    color: context.c.accentFill,
                     borderRadius: BorderRadius.circular(16),
                     clipBehavior: Clip.antiAlias,
                     child: InkWell(
@@ -962,14 +964,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.logout_rounded, color: Theme.of(context).colorScheme.surface, size: 22),
+                            Icon(Icons.logout_rounded, color: Colors.white, size: 22),
                             SizedBox(width: 8),
                             Text(
                               'Logout',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: Theme.of(context).colorScheme.surface,
+                                color: Colors.white,
                                 fontFamily: 'Inter',
                                 letterSpacing: 0.5,
                               ),
@@ -1016,7 +1018,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               context: context,
                               barrierDismissible: false,
                               builder: (context) => Center(
-                                child: CircularProgressIndicator(color: Theme.of(context).colorScheme.surface),
+                                child: CircularProgressIndicator(color: Colors.white),
                               ),
                             );
 
@@ -1027,7 +1029,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               scaffoldMessenger.showSnackBar(
                                 SnackBar(
                                   content: Text('Account permanently deleted.'),
-                                  backgroundColor: Theme.of(context).colorScheme.primary,
+                                  backgroundColor: context.c.hero,
                                 ),
                               );
 
@@ -1301,8 +1303,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           clipBehavior: Clip.antiAlias,
                           child: InkWell(
                             onTap: () => Navigator.of(context).pop(),
-                            splashColor: const Color(0xFF64748B).withValues(alpha: 0.1),
-                            highlightColor: const Color(0xFF64748B).withValues(alpha: 0.05),
+                            splashColor: context.c.textMuted.withValues(alpha: 0.1),
+                            highlightColor: context.c.textMuted.withValues(alpha: 0.05),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               alignment: Alignment.center,
@@ -1353,7 +1355,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               child: Text(
                                 confirmText,
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.surface,
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -1446,13 +1448,13 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     }
   }
 
-  final Color nirmaNavy = const Color(0xFF1A2B48);
-  final Color nirmaRed = const Color(0xFFC62828);
-  final Color textDark = const Color(0xFF0F172A);
-  final Color textGray = const Color(0xFF64748B);
-  final Color borderGray = const Color(0xFFCBD5E1);
-  final Color inputFill = const Color(0xFFF8FAFC);
-  final Color scaffoldBg = const Color(0xFFF1F4F9);
+  Color get nirmaNavy => context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0));
+  Color get nirmaRed => context.c.accent;
+  Color get textDark => context.c.text;
+  Color get textGray => context.c.textMuted;
+  Color get borderGray => context.c.borderStrong;
+  Color get inputFill => context.c.fill;
+  Color get scaffoldBg => context.c.bg;
 
 
   @override
@@ -1630,7 +1632,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: nirmaNavy,
+                  color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -1646,7 +1648,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.surface,
+                    color: Colors.white,
                     fontFamily: 'Inter',
                   ),
                 ),
@@ -1742,7 +1744,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? nirmaRed : inputFill,
+                  color: isSelected ? context.c.accentFill : inputFill,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected ? nirmaRed : borderGray.withValues(alpha: 0.6),
@@ -1879,7 +1881,7 @@ class _BranchSelectorSheetState extends State<_BranchSelectorSheet> {
             height: 4,
             margin: const EdgeInsets.only(top: 12, bottom: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFCBD5E1),
+              color: context.c.borderStrong,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1931,7 +1933,7 @@ class _BranchSelectorSheetState extends State<_BranchSelectorSheet> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+                  borderSide: BorderSide(color: context.c.borderStrong, width: 1.2),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1957,10 +1959,10 @@ class _BranchSelectorSheetState extends State<_BranchSelectorSheet> {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isSelected ? nirmaRed.withValues(alpha: 0.1) : const Color(0xFFF1F4F9),
+                      color: isSelected ? nirmaRed.withValues(alpha: 0.1) : context.c.bg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(branch['icon'], color: isSelected ? nirmaRed : const Color(0xFF64748B), size: 20),
+                    child: Icon(branch['icon'], color: isSelected ? nirmaRed : context.c.textMuted, size: 20),
                   ),
                   title: Text(
                     branch['name'],
@@ -2123,7 +2125,7 @@ class _ProfileSkeletonState extends State<_ProfileSkeleton> with SingleTickerPro
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A2B48), // nirmaNavy
+                    color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)), // nirmaNavy
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Row(

@@ -10,8 +10,7 @@ import '../domain/coding_profile_model.dart';
 import '../data/coding_service.dart';
 import 'link_profile_dialog.dart';
 import '../../../widgets/link_account_promo_sheet.dart';
-import '../../../widgets/ad_banner_widget.dart';
-
+import '../../../core/theme/app_theme.dart';
 
 class LeetCodeLeaderboardScreen extends ConsumerStatefulWidget {
   const LeetCodeLeaderboardScreen({super.key});
@@ -108,14 +107,14 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+              style: TextButton.styleFrom(foregroundColor: context.c.textMuted),
               child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
@@ -151,7 +150,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.surface, size: 24),
+                  Icon(Icons.check_circle_rounded, color: Colors.white, size: 24),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -160,7 +159,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                         fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -310,7 +309,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                           onPressed: () => _showFilterDialog(context),
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: context.c.fill,
                         contentPadding: const EdgeInsets.symmetric(vertical: 0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -363,7 +362,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                                     setState(() => _visibleCount += 20);
                                   },
                                   style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFFC62828),
+                                    foregroundColor: context.c.accent,
                                   ),
                                   child: Text('Show More', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ),
@@ -373,12 +372,6 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                       ),
                     ],
                   ),
-      ),
-      bottomNavigationBar: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: 6.0),
-          child: AdBannerWidget(placementKey: 'coding_leaderboard'),
-        ),
       ),
     );
   }
@@ -405,7 +398,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
         margin: isPinned ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: isCurrentUser ? const Color(0xFFFEF2F2) : Colors.white,
+          color: isCurrentUser ? context.c.accentSoft : context.c.card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -415,7 +408,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
             )
           ],
           border: Border.all(
-            color: isCurrentUser ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0),
+            color: isCurrentUser ? context.c.pick(const Color(0xFFFCA5A5), const Color(0xFF7F2A30)) : context.c.border,
             width: isCurrentUser ? 2 : 1,
           ),
         ),
@@ -427,13 +420,13 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
               height: 40,
               decoration: BoxDecoration(
                 color: rank <= 3 
-                    ? const Color(0xFFFEF2F2) 
-                    : const Color(0xFFF8FAFC),
+                    ? context.c.accentSoft 
+                    : context.c.fill,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: rank <= 3 
-                      ? const Color(0xFFFCA5A5) 
-                      : const Color(0xFFE2E8F0)
+                      ? context.c.pick(const Color(0xFFFCA5A5), const Color(0xFF7F2A30)) 
+                      : context.c.border
                 ),
               ),
               child: Center(
@@ -442,8 +435,8 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: rank <= 3 
-                        ? const Color(0xFFDC2626) 
-                        : const Color(0xFF64748B),
+                        ? context.c.pick(const Color(0xFFDC2626), const Color(0xFFF87171)) 
+                        : context.c.textMuted,
                   ),
                 ),
               ),
@@ -460,7 +453,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: isCurrentUser ? const Color(0xFFC62828) : const Color(0xFF0F172A),
+                      color: isCurrentUser ? context.c.accent : context.c.text,
                     ),
                   ),
                   Text(
@@ -489,10 +482,10 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: _sortBy == 'Rating' ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
+              color: _sortBy == 'Rating' ? context.c.successSoft : context.c.warningSoft,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _sortBy == 'Rating' ? const Color(0xFFBBF7D0) : const Color(0xFFFED7AA),
+                color: _sortBy == 'Rating' ? context.c.successBorder : context.c.warningBorder,
               ),
             ),
             child: Column(
@@ -503,7 +496,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                       : (profile.leetcodeRanking > 0 ? '#${profile.leetcodeRanking}' : 'N/A'),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: _sortBy == 'Rating' ? const Color(0xFF166534) : const Color(0xFF9A3412),
+                    color: _sortBy == 'Rating' ? context.c.pick(const Color(0xFF166534), const Color(0xFF86EFAC)) : context.c.pick(const Color(0xFF9A3412), const Color(0xFFFDBA74)),
                     fontSize: _sortBy == 'Rating' ? 16 : 14,
                   ),
                 ),
@@ -511,7 +504,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                   _sortBy == 'Rating' ? 'Rating' : 'Global Rank',
                   style: TextStyle(
                     fontSize: 10,
-                    color: _sortBy == 'Rating' ? const Color(0xFF166534) : const Color(0xFF9A3412),
+                    color: _sortBy == 'Rating' ? context.c.pick(const Color(0xFF166534), const Color(0xFF86EFAC)) : context.c.pick(const Color(0xFF9A3412), const Color(0xFFFDBA74)),
                   ),
                 ),
               ],
@@ -555,15 +548,15 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                             setState(() => _filter = filterName);
                           }
                         },
-                        selectedColor: const Color(0xFFFEF2F2),
+                        selectedColor: context.c.accentSoft,
                         labelStyle: TextStyle(
-                          color: isSelected ? const Color(0xFFC62828) : const Color(0xFF64748B),
+                          color: isSelected ? context.c.accent : context.c.textMuted,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
-                            color: isSelected ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
+                            color: isSelected ? const Color(0xFFEF4444) : context.c.border,
                           ),
                         ),
                         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -585,8 +578,8 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                     },
                     style: SegmentedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.surface,
-                      selectedBackgroundColor: const Color(0xFFFEF2F2),
-                      selectedForegroundColor: const Color(0xFFC62828),
+                      selectedBackgroundColor: context.c.accentSoft,
+                      selectedForegroundColor: context.c.accent,
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
@@ -595,7 +588,7 @@ class _LeetCodeLeaderboardScreenState extends ConsumerState<LeetCodeLeaderboardS
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),

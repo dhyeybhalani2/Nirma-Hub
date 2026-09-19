@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/notifications/presentation/providers/notifications_provider.dart';
 import 'features/notifications/domain/app_notification.dart';
 import 'widgets/premium_touch_button.dart';
-import 'widgets/ad_banner_widget.dart';
 import 'peer_to_peer_screen.dart';
 import 'lost_found_screen.dart';
+import 'core/theme/app_theme.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -17,11 +17,11 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   // Premium Design System Palette from Home Page
-  final Color baseNavy = const Color(0xFF0F172A); // Slate 900
-  final Color textGray = const Color(0xFF64748B); // Slate 500
-  final Color borderGray = const Color(0xFFE2E8F0); // Slate 200
-  final Color bgSurface = const Color(0xFFF1F4F9); // Slate 100
-  final Color nirmaRed = const Color(0xFFC62828); // Brand Red
+  Color get baseNavy => context.c.text; // Slate 900
+  Color get textGray => context.c.textMuted; // Slate 500
+  Color get borderGray => context.c.border; // Slate 200
+  Color get bgSurface => context.c.bg; // Slate 100
+  Color get nirmaRed => context.c.accent; // Brand Red
 
   ScaffoldMessengerState? _scaffoldMessenger;
 
@@ -114,7 +114,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ElevatedButton(
               onPressed: () => Navigator.of(ctx).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: nirmaRed,
+                backgroundColor: context.c.accentFill,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -140,7 +140,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             'All notifications cleared',
             style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Manrope'),
           ),
-          backgroundColor: baseNavy,
+          backgroundColor: context.c.hero,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 2),
@@ -255,12 +255,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         SnackBar(
                           duration: const Duration(seconds: 4),
                           content: Text('Notification dismissed', style: TextStyle(fontWeight: FontWeight.w600)),
-                          backgroundColor: const Color(0xFF0F172A),
+                          backgroundColor: context.c.hero,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           action: SnackBarAction(
                             label: 'Undo',
-                            textColor: const Color(0xFFC62828),
+                            textColor: context.c.accent,
                             onPressed: () {
                               scaffoldMessenger.hideCurrentSnackBar();
                               ref.read(notificationsProvider.notifier).restoreNotification(dismissedNote, dismissedIndex);
@@ -285,7 +285,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEE2E2),
+                        color: context.c.dangerSoft,
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Icon(CupertinoIcons.trash, color: Color(0xFFEF4444), size: 28),
@@ -296,12 +296,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               },
             );
           },
-        ),
-      ),
-      bottomNavigationBar: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: 6.0),
-          child: AdBannerWidget(placementKey: 'notifications_screen'),
         ),
       ),
     );
@@ -375,7 +369,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ElevatedButton(
             onPressed: () => ref.read(notificationsProvider.notifier).refresh(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: nirmaRed,
+              backgroundColor: context.c.accentFill,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),

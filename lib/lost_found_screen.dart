@@ -11,9 +11,9 @@ import 'core/utils/image_compressor.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/lost_and_found/domain/lost_and_found_item.dart';
 import 'widgets/premium_touch_button.dart';
-import 'widgets/ad_banner_widget.dart';
 import 'features/lost_and_found/presentation/providers/lost_and_found_provider.dart';
 import 'features/moderation/presentation/providers/moderation_provider.dart';
+import 'core/theme/app_theme.dart';
 
 class LostAndFoundPage extends ConsumerStatefulWidget {
   const LostAndFoundPage({super.key});
@@ -76,7 +76,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: context.c.card,
               title: const Text('Report Item', style: TextStyle(fontWeight: FontWeight.bold)),
               content: SingleChildScrollView(
                 child: Column(
@@ -92,7 +92,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                             selectedReason = value!;
                           });
                         },
-                        activeColor: const Color(0xFFC62828),
+                        activeColor: context.c.accent,
                       );
                     }),
                     if (selectedReason == 'Other')
@@ -115,7 +115,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+                  child: Text('Cancel', style: TextStyle(color: context.c.textMuted)),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -147,7 +147,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: context.c.accentFill, foregroundColor: Colors.white),
                   child: const Text('Submit'),
                 ),
               ],
@@ -163,13 +163,13 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: context.c.card,
           title: const Text('Block User?', style: TextStyle(fontWeight: FontWeight.bold)),
           content: const Text('Are you sure you want to block this user? You will no longer see their items.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+              child: Text('Cancel', style: TextStyle(color: context.c.textMuted)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -192,7 +192,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC62828), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: context.c.accentFill, foregroundColor: Colors.white),
               child: const Text('Block'),
             ),
           ],
@@ -206,9 +206,9 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-      backgroundColor: const Color(0xFFF1F4F9),
+      backgroundColor: context.c.bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.c.card,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -232,10 +232,10 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                         _searchQuery = "";
                       });
                     },
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 38,
                       height: 38,
-                      child: Icon(CupertinoIcons.arrow_left, color: Color(0xFF0F172A), size: 18),
+                      child: Icon(CupertinoIcons.arrow_left, color: context.c.text, size: 18),
                     ),
                   ),
                 ),
@@ -250,10 +250,10 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 38,
                       height: 38,
-                      child: Icon(CupertinoIcons.arrow_left, color: Color(0xFF0F172A), size: 18),
+                      child: Icon(CupertinoIcons.arrow_left, color: context.c.text, size: 18),
                     ),
                   ),
                 ),
@@ -263,7 +263,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
           ? Container(
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F4F9), // Flat grey background
+                color: context.c.bg, // Flat grey background
                 borderRadius: BorderRadius.circular(24), // Pill shape
               ),
               child: TextField(
@@ -274,17 +274,17 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                     _searchQuery = value;
                   });
                 },
-                style: const TextStyle(color: Color(0xFF0F172A), fontSize: 15),
-                cursorColor: const Color(0xFF0F172A),
+                style: TextStyle(color: context.c.text, fontSize: 15),
+                cursorColor: context.c.text,
                 decoration: InputDecoration(
                   hintText: "Search Lost, Found...",
-                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15, fontWeight: FontWeight.w500),
+                  hintStyle: TextStyle(color: context.c.textFaint, fontSize: 15, fontWeight: FontWeight.w500),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(CupertinoIcons.search, color: Color(0xFF64748B), size: 20),
+                  prefixIcon: Icon(CupertinoIcons.search, color: context.c.textMuted, size: 20),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.cancel, color: Color(0xFF94A3B8), size: 18),
+                          icon: Icon(Icons.cancel, color: context.c.textFaint, size: 18),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {
@@ -296,12 +296,12 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                 ),
               ),
             )
-          : const Text(
+          : Text(
               "Lost & Found",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
+                color: context.c.text,
                 letterSpacing: -0.5,
                 fontFamily: 'Manrope',
               ),
@@ -309,9 +309,9 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
         actions: [
           if (!_isSearching)
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.search,
-                color: Color(0xFF0F172A),
+                color: context.c.text,
               ),
               onPressed: () {
                 setState(() {
@@ -323,18 +323,18 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: context.c.border, width: 1)),
             ),
             child: TabBar(
               isScrollable: false,
               splashFactory: NoSplash.splashFactory,
               indicatorSize: TabBarIndicatorSize.label,
-              labelColor: const Color(0xFFC62828),
-              unselectedLabelColor: const Color(0xFF64748B),
+              labelColor: context.c.accent,
+              unselectedLabelColor: context.c.textMuted,
               labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, fontFamily: 'Manrope'),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFamily: 'Manrope'),
-              indicatorColor: const Color(0xFFC62828),
+              indicatorColor: context.c.accent,
               indicatorWeight: 3,
               dividerColor: Colors.transparent,
               overlayColor: WidgetStateProperty.all(Colors.transparent),
@@ -351,7 +351,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
         physics: const BouncingScrollPhysics(),
         children: [0, 1, 2].map((tabIndex) {
           return RefreshIndicator(
-            color: const Color(0xFFC62828),
+            color: context.c.accent,
             onRefresh: () async {
               return ref.refresh(lostAndFoundItemsProvider.future);
             },
@@ -363,13 +363,13 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                   data: (items) {
                     final filtered = _getFilteredItems(items, tabIndex);
                     if (filtered.isEmpty) {
-                      return const SliverToBoxAdapter(
+                      return SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 40),
                           child: Center(
                             child: Text(
                               "No items found.",
-                              style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+                              style: TextStyle(color: context.c.textMuted, fontSize: 16),
                             ),
                           ),
                         ),
@@ -391,7 +391,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                   error: (err, stack) => SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
-                      child: Center(child: Text("Error loading items: ", style: const TextStyle(color: Colors.red))),
+                      child: Center(child: Text("Error loading items: ", style: TextStyle(color: context.c.danger))),
                     ),
                   ),
                 ),
@@ -409,7 +409,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showReportDialog(context),
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: context.c.hero,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           "Report Item",
@@ -420,12 +420,6 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
           ),
         ),
         elevation: 4,
-      ),
-      bottomNavigationBar: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: 6.0),
-          child: AdBannerWidget(placementKey: 'lost_and_found'),
-        ),
       ),
     ),
     );
@@ -448,7 +442,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
             Text(
               label.toUpperCase(),
               style: TextStyle(
-                color: isSelected ? const Color(0xFFC62828) : const Color(0xFF64748B),
+                color: isSelected ? context.c.accent : context.c.textMuted,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 fontSize: 14,
                 letterSpacing: 0.5,
@@ -460,7 +454,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
               height: 3,
               width: isSelected ? 30 : 0,
               decoration: BoxDecoration(
-                color: const Color(0xFFC62828),
+                color: context.c.accentFill,
                 borderRadius: BorderRadius.circular(2),
               ),
             )
@@ -479,9 +473,9 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.c.card,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.5), width: 1),
+          border: Border.all(color: context.c.border.withValues(alpha: 0.5), width: 1),
           boxShadow: [
             BoxShadow(color: const Color(0xFF0F172A).withValues(alpha: 0.02),
               blurRadius: 12,
@@ -506,8 +500,8 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                         errorWidget: (context, url, error) => Container(
                           width: 100,
                           height: 100,
-                          color: const Color(0xFFF1F4F9),
-                          child: const Icon(Icons.image_not_supported, color: Color(0xFF94A3B8)),
+                          color: context.c.bg,
+                          child: Icon(Icons.image_not_supported, color: context.c.textFaint),
                         ),
                       )
                     : Image.file(
@@ -518,8 +512,8 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                         errorBuilder: (context, error, stackTrace) => Container(
                           width: 100,
                           height: 100,
-                          color: const Color(0xFFF1F4F9),
-                          child: const Icon(Icons.broken_image, color: Color(0xFF94A3B8)),
+                          color: context.c.bg,
+                          child: Icon(Icons.broken_image, color: context.c.textFaint),
                         ),
                       ),
                 ),
@@ -530,7 +524,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
+                        color: context.c.hero,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.check, color: Colors.white, size: 12),
@@ -551,10 +545,10 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                       Expanded(
                         child: Text(
                           item.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: context.c.text,
                             height: 1.2,
                           ),
                           maxLines: 2,
@@ -566,8 +560,8 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: item.isLost 
-                            ? const Color(0xFFFEF2F2) 
-                            : const Color(0xFFF0FDF4),
+                            ? context.c.accentSoft 
+                            : context.c.successSoft,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -575,7 +569,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: item.isLost ? const Color(0xFFC62828) : const Color(0xFF16A34A),
+                            color: item.isLost ? context.c.accent : context.c.pick(const Color(0xFF16A34A), const Color(0xFF4ADE80)),
                           ),
                         ),
                       ),
@@ -584,12 +578,12 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
+                      Icon(Icons.location_on_outlined, size: 14, color: context.c.textMuted),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           item.location,
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 12, color: context.c.textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -599,11 +593,11 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 14, color: Color(0xFF64748B)),
+                      Icon(Icons.access_time, size: 14, color: context.c.textMuted),
                       const SizedBox(width: 4),
                       Text(
                         item.date.split(',').first,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12, color: context.c.textMuted),
                       ),
                     ],
                   ),
@@ -631,8 +625,8 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
           maxChildSize: 1.0,
           builder: (_, controller) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: context.c.card,
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
               ),
               clipBehavior: Clip.antiAlias,
@@ -652,9 +646,9 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                           errorWidget: (context, url, error) => Container(
                             height: 300,
                             width: double.infinity,
-                            color: const Color(0xFFF1F4F9),
-                            child: const Center(
-                              child: Icon(Icons.image_not_supported, color: Color(0xFF94A3B8), size: 64),
+                            color: context.c.bg,
+                            child: Center(
+                              child: Icon(Icons.image_not_supported, color: context.c.textFaint, size: 64),
                             ),
                           ),
                         )
@@ -666,9 +660,9 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                           errorBuilder: (context, error, stackTrace) => Container(
                             height: 300,
                             width: double.infinity,
-                            color: const Color(0xFFF1F4F9),
-                            child: const Center(
-                              child: Icon(Icons.broken_image, color: Color(0xFF94A3B8), size: 64),
+                            color: context.c.bg,
+                            child: Center(
+                              child: Icon(Icons.broken_image, color: context.c.textFaint, size: 64),
                             ),
                           ),
                         ),
@@ -678,7 +672,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                         right: 68,
                         child: PopupMenuButton<String>(
                           padding: EdgeInsets.zero,
-                          color: Colors.white,
+                          color: context.c.card,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 8,
                           position: PopupMenuPosition.under,
@@ -690,23 +684,23 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                             }
                           },
                           itemBuilder: (context) => [
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'report',
                               child: Row(
                                 children: [
-                                  Icon(Icons.flag_outlined, size: 20, color: Color(0xFF0F172A)),
+                                  Icon(Icons.flag_outlined, size: 20, color: context.c.text),
                                   SizedBox(width: 12),
-                                  Text('Report Item', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                  Text('Report Item', style: TextStyle(fontWeight: FontWeight.w600, color: context.c.text)),
                                 ],
                               ),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'block',
                               child: Row(
                                 children: [
-                                  Icon(Icons.block, size: 20, color: Color(0xFFC62828)),
+                                  Icon(Icons.block, size: 20, color: context.c.accent),
                                   SizedBox(width: 12),
-                                  Text('Block User', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFC62828))),
+                                  Text('Block User', style: TextStyle(fontWeight: FontWeight.w600, color: context.c.accent)),
                                 ],
                               ),
                             ),
@@ -752,14 +746,14 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                                       child: item.imagePath.startsWith('http')
                                           ? CachedNetworkImage(
                                               imageUrl: item.imagePath,
-                                              errorWidget: (context, url, error) => const Center(
-                                                child: Icon(Icons.image_not_supported, color: Color(0xFF94A3B8), size: 64),
+                                              errorWidget: (context, url, error) => Center(
+                                                child: Icon(Icons.image_not_supported, color: context.c.textFaint, size: 64),
                                               ),
                                             )
                                           : Image.file(
                                               File(item.imagePath),
-                                              errorBuilder: (context, error, stackTrace) => const Center(
-                                                child: Icon(Icons.broken_image, color: Color(0xFF94A3B8), size: 64),
+                                              errorBuilder: (context, error, stackTrace) => Center(
+                                                child: Icon(Icons.broken_image, color: context.c.textFaint, size: 64),
                                               ),
                                             ),
                                     ),
@@ -800,10 +794,10 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                           Expanded(
                             child: Text(
                               item.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF0F172A),
+                                color: context.c.text,
                                 letterSpacing: -0.5,
                               ),
                             ),
@@ -811,7 +805,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: item.isLost ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4),
+                              color: item.isLost ? context.c.accentSoft : context.c.successSoft,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -819,27 +813,27 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: item.isLost ? const Color(0xFFC62828) : const Color(0xFF16A34A),
+                                color: item.isLost ? context.c.accent : context.c.pick(const Color(0xFF16A34A), const Color(0xFF4ADE80)),
                               ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         "Description",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.c.text),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         item.description,
-                        style: const TextStyle(fontSize: 16, color: Color(0xFF475569), height: 1.5),
+                        style: TextStyle(fontSize: 16, color: context.c.textSecondary, height: 1.5),
                       ),
                       const SizedBox(height: 32),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: context.c.fill,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
@@ -848,11 +842,11 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(10),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFEF2F2),
+                                  decoration: BoxDecoration(
+                                    color: context.c.accentSoft,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.person_outline, size: 24, color: Color(0xFFC62828)),
+                                  child: Icon(Icons.person_outline, size: 24, color: context.c.accent),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
@@ -861,12 +855,12 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                                     children: [
                                       Text(
                                         "${item.isLost ? 'Lost by' : 'Found by'}",
-                                        style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                        style: TextStyle(fontSize: 13, color: context.c.textMuted),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         item.personName,
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.c.text),
                                       ),
                                     ],
                                   ),
@@ -874,33 +868,33 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                               ],
                             ),
                             if (!item.isSuccessful) ...[
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                                child: Divider(height: 1, color: context.c.border),
                               ),
                               Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(10),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFFEF2F2),
+                                    decoration: BoxDecoration(
+                                      color: context.c.accentSoft,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.phone_outlined, size: 24, color: Color(0xFFC62828)),
+                                    child: Icon(Icons.phone_outlined, size: 24, color: context.c.accent),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
+                                        Text(
                                           "Contact Number",
-                                          style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                          style: TextStyle(fontSize: 13, color: context.c.textMuted),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           item.contactNumber.isNotEmpty ? item.contactNumber : "Not provided",
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.c.text),
                                         ),
                                       ],
                                     ),
@@ -908,33 +902,33 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                                 ],
                               ),
                               if (item.email.isNotEmpty) ...[
-                                const Padding(
+                                Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16),
-                                  child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                                  child: Divider(height: 1, color: context.c.border),
                                 ),
                                 Row(
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.all(10),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFFEF2F2),
+                                      decoration: BoxDecoration(
+                                        color: context.c.accentSoft,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.email_outlined, size: 24, color: Color(0xFFC62828)),
+                                      child: Icon(Icons.email_outlined, size: 24, color: context.c.accent),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
+                                          Text(
                                             "Email Address",
-                                            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                            style: TextStyle(fontSize: 13, color: context.c.textMuted),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
                                             item.email,
-                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.c.text),
                                           ),
                                         ],
                                       ),
@@ -949,12 +943,12 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                       const SizedBox(height: 32),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, size: 22, color: Color(0xFF94A3B8)),
+                          Icon(Icons.location_on, size: 22, color: context.c.textFaint),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               item.location,
-                              style: const TextStyle(fontSize: 16, color: Color(0xFF475569)),
+                              style: TextStyle(fontSize: 16, color: context.c.textSecondary),
                             ),
                           ),
                         ],
@@ -962,12 +956,12 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          const Icon(Icons.access_time_filled, size: 22, color: Color(0xFF94A3B8)),
+                          Icon(Icons.access_time_filled, size: 22, color: context.c.textFaint),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               item.date,
-                              style: const TextStyle(fontSize: 16, color: Color(0xFF475569)),
+                              style: TextStyle(fontSize: 16, color: context.c.textSecondary),
                             ),
                           ),
                         ],
@@ -982,7 +976,7 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                               Navigator.of(context).pop();
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF16A34A),
+                              backgroundColor: context.c.successFill,
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               elevation: 0,
@@ -1009,8 +1003,8 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
 
   Widget _buildBottomNavTab(IconData outlineIcon, IconData filledIcon, String label, int index) {
     bool isActive = currentBottomNavIndex == index;
-    final activeColor = const Color(0xFFC62828); // Red
-    final inactiveColor = const Color(0xFF64748B);
+    final activeColor = context.c.accent; // Red
+    final inactiveColor = context.c.textMuted;
 
     return Expanded(
       child: InkWell(
@@ -1045,8 +1039,8 @@ class _LostAndFoundPageState extends ConsumerState<LostAndFoundPage> {
                 margin: const EdgeInsets.only(top: 2),
                 width: 4,
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFC62828),
+                decoration: BoxDecoration(
+                  color: context.c.accentFill,
                   shape: BoxShape.circle,
                 ),
               )
@@ -1114,8 +1108,10 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
     super.dispose();
   }
 
-  Color get currentColor => _tabController.index == 0 ? const Color(0xFFC62828) : const Color(0xFF10B981);
-  Color get softColor => _tabController.index == 0 ? const Color(0xFFC62828).withValues(alpha: 0.1) : const Color(0xFF10B981).withValues(alpha: 0.1);
+  Color get currentColor => _tabController.index == 0 ? context.c.accent : context.c.success;
+  /// Same hue as [currentColor] but deep enough to carry a white label.
+  Color get currentFill => _tabController.index == 0 ? context.c.accentFill : context.c.successFill;
+  Color get softColor => _tabController.index == 0 ? context.c.accent.withValues(alpha: 0.1) : context.c.success.withValues(alpha: 0.1);
 
   Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? hintText, bool readOnly = false, VoidCallback? onTap, String? errorText, TextInputType? keyboardType, int? maxLength, }) {
     return Padding(
@@ -1130,35 +1126,35 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
         onChanged: (val) {
           if (hasAttemptedSubmit) setState(() {});
         },
-        cursorColor: const Color(0xFF0F172A),
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF0F172A)),
+        cursorColor: context.c.text,
+        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: context.c.text),
         decoration: InputDecoration(
           labelText: label,
           counterText: "",
           labelStyle: TextStyle(
             fontSize: 16,
-            color: errorText != null ? const Color(0xFFC62828) : const Color(0xFF64748B),
+            color: errorText != null ? context.c.accent : context.c.textMuted,
           ),
           floatingLabelStyle: TextStyle(
             fontSize: 16,
             color: WidgetStateColor.resolveWith((states) {
-              if (errorText != null) return const Color(0xFFC62828);
+              if (errorText != null) return context.c.accent;
               if (states.contains(WidgetState.focused)) return currentColor;
-              return const Color(0xFF0F172A);
+              return context.c.text;
             }),
             fontWeight: FontWeight.w600,
           ),
           hintText: hintText,
-          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+          hintStyle: TextStyle(color: context.c.textFaint, fontSize: 14),
           floatingLabelBehavior: FloatingLabelBehavior.always,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: context.c.card,
           errorText: errorText,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? Colors.red : const Color(0xFFE2E8F0))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? Colors.red : Colors.black)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? context.c.danger : context.c.border)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: errorText != null ? context.c.danger : context.c.text)),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: currentColor, width: 2.0)),
-          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red)),
-          focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.c.danger)),
+          focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.c.danger, width: 1.5)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
@@ -1182,8 +1178,8 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
     return Container(
       margin: EdgeInsets.only(top: kToolbarHeight),
       padding: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF1F4F9), // Exam popup background
+      decoration: BoxDecoration(
+        color: context.c.bg, // Exam popup background
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -1197,7 +1193,7 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFE2E6EE),
+                color: context.c.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1224,7 +1220,7 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1233,7 +1229,7 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F1A2C),
+                          color: context.c.text,
                           fontFamily: 'Manrope',
                         ),
                       ),
@@ -1244,14 +1240,14 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E6EE).withValues(alpha: 0.5),
+                    color: context.c.border.withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
-                      color: Color(0xFF0F1A2C),
+                      color: context.c.text,
                       size: 16,
                     ),
                     onPressed: () => Navigator.pop(context),
@@ -1264,8 +1260,8 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
           
           // TabBar (Like Main Screen)
           Container(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: context.c.border, width: 1)),
             ),
             child: TabBar(
               controller: _tabController,
@@ -1273,7 +1269,7 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
               splashFactory: NoSplash.splashFactory,
               indicatorSize: TabBarIndicatorSize.label,
               labelColor: currentColor,
-              unselectedLabelColor: const Color(0xFF64748B),
+              unselectedLabelColor: context.c.textMuted,
               labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, fontFamily: 'Manrope'),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFamily: 'Manrope'),
               indicatorColor: currentColor,
@@ -1349,7 +1345,7 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
                   
                   // Image Picker
                   const SizedBox(height: 8),
-                  const Text("Upload Image (Optional)", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                  Text("Upload Image (Optional)", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.c.textMuted)),
                   const SizedBox(height: 12),
                   GestureDetector(
                     onTap: () async {
@@ -1362,9 +1358,9 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
                     child: Container(
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.c.card,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: context.c.border),
                       ),
                       child: selectedImagePath != null
                           ? ClipRRect(
@@ -1396,7 +1392,7 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
                                   child: Icon(Icons.cloud_upload_rounded, color: currentColor, size: 24),
                                 ),
                                 const SizedBox(height: 12),
-                                const Text("Tap to select image", style: TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w700)),
+                                Text("Tap to select image", style: TextStyle(color: context.c.textMuted, fontSize: 13, fontWeight: FontWeight.w700)),
                               ],
                             ),
                     ),
@@ -1441,7 +1437,7 @@ class _ReportItemBottomSheetState extends State<_ReportItemBottomSheet> with Sin
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: currentColor,
+                        backgroundColor: currentFill,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -1659,8 +1655,8 @@ class _CustomDatePickerBottomSheetState extends State<_CustomDatePickerBottomShe
     return Container(
       height: 320,
       padding: const EdgeInsets.only(top: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: context.c.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -1673,7 +1669,7 @@ class _CustomDatePickerBottomSheetState extends State<_CustomDatePickerBottomShe
                 width: 40,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E6EE),
+                  color: context.c.border,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -1703,7 +1699,7 @@ class _CustomDatePickerBottomSheetState extends State<_CustomDatePickerBottomShe
                   height: 54,
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F1A2C).withValues(alpha: 0.04),
+                    color: context.c.text.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -1731,7 +1727,7 @@ class _CustomDatePickerBottomSheetState extends State<_CustomDatePickerBottomShe
                             (index) => Center(
                               child: Text(
                                 "${index + 1}",
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F1A2C), fontFamily: 'Manrope', decoration: TextDecoration.none),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.c.text, fontFamily: 'Manrope', decoration: TextDecoration.none),
                               ),
                             ),
                           ),
@@ -1787,7 +1783,7 @@ class _CustomDatePickerBottomSheetState extends State<_CustomDatePickerBottomShe
                             (index) => Center(
                               child: Text(
                                 "${2000 + index}",
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F1A2C), fontFamily: 'Manrope', decoration: TextDecoration.none),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.c.text, fontFamily: 'Manrope', decoration: TextDecoration.none),
                               ),
                             ),
                           ),
@@ -1884,8 +1880,8 @@ class _CustomTimePickerBottomSheetState extends State<_CustomTimePickerBottomShe
     return Container(
       height: 320,
       padding: const EdgeInsets.only(top: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: context.c.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -1898,7 +1894,7 @@ class _CustomTimePickerBottomSheetState extends State<_CustomTimePickerBottomShe
                 width: 40,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E6EE),
+                  color: context.c.border,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -1931,7 +1927,7 @@ class _CustomTimePickerBottomSheetState extends State<_CustomTimePickerBottomShe
                   height: 54,
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F1A2C).withValues(alpha: 0.04),
+                    color: context.c.text.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -1958,7 +1954,7 @@ class _CustomTimePickerBottomSheetState extends State<_CustomTimePickerBottomShe
                             (index) => Center(
                               child: Text(
                                 "${index + 1}",
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F1A2C), fontFamily: 'Manrope', decoration: TextDecoration.none),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.c.text, fontFamily: 'Manrope', decoration: TextDecoration.none),
                               ),
                             ),
                           ),
@@ -1986,7 +1982,7 @@ class _CustomTimePickerBottomSheetState extends State<_CustomTimePickerBottomShe
                             (index) => Center(
                               child: Text(
                                 index.toString().padLeft(2, '0'),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F1A2C), fontFamily: 'Manrope', decoration: TextDecoration.none),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.c.text, fontFamily: 'Manrope', decoration: TextDecoration.none),
                               ),
                             ),
                           ),

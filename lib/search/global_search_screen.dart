@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ai/notes_screen.dart';
+import '../core/theme/app_theme.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
   const GlobalSearchScreen({super.key});
@@ -273,7 +274,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1E293B),
+                          color: context.c.textSoft,
                         ),
                       ),
                       if (subjectName.isNotEmpty) ...[

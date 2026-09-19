@@ -10,8 +10,7 @@ import '../data/coding_service.dart';
 import 'link_profile_dialog.dart';
 import '../../../widgets/link_account_promo_sheet.dart';
 import '../../../../widgets/premium_touch_button.dart';
-import '../../../widgets/ad_banner_widget.dart';
-
+import '../../../core/theme/app_theme.dart';
 
 class CodeforcesLeaderboardScreen extends ConsumerStatefulWidget {
   const CodeforcesLeaderboardScreen({super.key});
@@ -107,7 +106,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+              style: TextButton.styleFrom(foregroundColor: context.c.textMuted),
               child: Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
@@ -150,7 +149,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.surface, size: 24),
+                  Icon(Icons.check_circle_rounded, color: Colors.white, size: 24),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -159,7 +158,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                         fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -301,7 +300,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                           onPressed: () => _showFilterDialog(context),
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: context.c.fill,
                         contentPadding: const EdgeInsets.symmetric(vertical: 0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -365,12 +364,6 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                     ],
                   ),
       ),
-      bottomNavigationBar: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: 6.0),
-          child: AdBannerWidget(placementKey: 'coding_leaderboard'),
-        ),
-      ),
     );
   }
 
@@ -396,7 +389,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
         margin: isPinned ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: isCurrentUser ? const Color(0xFFFEF2F2) : Colors.white,
+          color: isCurrentUser ? context.c.accentSoft : context.c.card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -406,7 +399,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
             )
           ],
         border: Border.all(
-          color: isCurrentUser ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0),
+          color: isCurrentUser ? context.c.pick(const Color(0xFFFCA5A5), const Color(0xFF7F2A30)) : context.c.border,
           width: isCurrentUser ? 2 : 1,
         ),
       ),
@@ -418,13 +411,13 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
             height: 40,
             decoration: BoxDecoration(
               color: rank <= 3 
-                  ? (isCurrentUser ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF))
-                  : const Color(0xFFF8FAFC),
+                  ? (isCurrentUser ? context.c.accentSoft : context.c.infoSoft)
+                  : context.c.fill,
               shape: BoxShape.circle,
               border: Border.all(
                 color: rank <= 3 
-                    ? (isCurrentUser ? const Color(0xFFFCA5A5) : const Color(0xFF93C5FD))
-                    : const Color(0xFFE2E8F0)
+                    ? (isCurrentUser ? context.c.pick(const Color(0xFFFCA5A5), const Color(0xFF7F2A30)) : context.c.pick(const Color(0xFF93C5FD), const Color(0xFF1E3A6B)))
+                    : context.c.border
               ),
             ),
             child: Center(
@@ -433,8 +426,8 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: rank <= 3 
-                      ? (isCurrentUser ? const Color(0xFFDC2626) : const Color(0xFF1D4ED8))
-                      : const Color(0xFF64748B),
+                      ? (isCurrentUser ? context.c.pick(const Color(0xFFDC2626), const Color(0xFFF87171)) : context.c.pick(const Color(0xFF1D4ED8), const Color(0xFF93B4F5)))
+                      : context.c.textMuted,
                 ),
               ),
             ),
@@ -451,7 +444,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: isCurrentUser ? const Color(0xFFC62828) : const Color(0xFF0F172A),
+                    color: isCurrentUser ? context.c.accent : context.c.text,
                   ),
                 ),
                 Text(
@@ -480,9 +473,9 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: context.c.successSoft,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBBF7D0)), 
+              border: Border.all(color: context.c.successBorder), 
             ),
             child: Column(
               children: [
@@ -490,7 +483,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                   '${profile.codeforcesRating}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF166534),
+                    color: context.c.pick(const Color(0xFF166534), const Color(0xFF86EFAC)),
                     fontSize: 16,
                   ),
                 ),
@@ -498,7 +491,7 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                   'Rating',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF166534),
+                    color: context.c.pick(const Color(0xFF166534), const Color(0xFF86EFAC)),
                   ),
                 ),
               ],
@@ -542,15 +535,15 @@ class _CodeforcesLeaderboardScreenState extends ConsumerState<CodeforcesLeaderbo
                             setState(() => _filter = filterName);
                           }
                         },
-                        selectedColor: const Color(0xFFEFF6FF),
+                        selectedColor: context.c.infoSoft,
                         labelStyle: TextStyle(
-                          color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFF64748B),
+                          color: isSelected ? context.c.pick(const Color(0xFF1D4ED8), const Color(0xFF93B4F5)) : context.c.textMuted,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
-                            color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFE2E8F0),
+                            color: isSelected ? const Color(0xFF3B82F6) : context.c.border,
                           ),
                         ),
                         backgroundColor: Theme.of(context).colorScheme.surface,

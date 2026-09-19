@@ -4,10 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'widgets/skeleton_loaders.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'widgets/contribution_bottom_sheet.dart';
-import 'widgets/ad_banner_widget.dart';
-import 'widgets/ad_native_widget.dart';
-import 'services/ad_service.dart';
 import 'notes_screen.dart';
+import 'core/theme/app_theme.dart';
 
 class PyqListScreen extends StatefulWidget {
   final String subjectId;
@@ -194,14 +192,14 @@ class _PyqListScreenState extends State<PyqListScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.history_edu, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.history_edu, size: 64, color: context.c.textFaint),
                       SizedBox(height: 16),
                       Text(
                         "No PYQs Available",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: Colors.grey[800],
+                          color: context.c.textSoft,
                           fontFamily: 'Manrope',
                         ),
                       ),
@@ -210,7 +208,7 @@ class _PyqListScreenState extends State<PyqListScreen> {
                         "Check back later for updates.",
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: context.c.textMuted,
                           fontFamily: 'Manrope',
                         ),
                       ),
@@ -336,7 +334,7 @@ class _PyqListScreenState extends State<PyqListScreen> {
                               SizedBox(height: 4),
                             ],
                           ),
-                        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFFCBD5E1)),
+                        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: context.c.borderStrong),
                         onTap: () {
                           final title = pyq['file_name'] != null && pyq['file_name'].toString().isNotEmpty
                               ? pyq['file_name']
@@ -346,73 +344,50 @@ class _PyqListScreenState extends State<PyqListScreen> {
                       ),
                     );
 
-                    final interval = AdService().nativeAdInterval;
-                    if ((index + 1) % interval == 0 && index != _pyqs.length - 1) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          pyqCard,
-                          const AdNativeCard(
-                            placementKey: 'pyq_papers_in_between',
-                            isMediumTemplate: false,
-                            margin: EdgeInsets.only(bottom: 12),
-                          ),
-                        ],
-                      );
-                    }
                     return pyqCard;
                   },
                 ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Center(child: AdBannerWidget()),
-              const SizedBox(height: 10),
-              InkWell(
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) {
-                      return ContributionBottomSheet(
-                        subjectName: widget.subjectName,
-                        specialThanks: widget.specialThanks,
-                        isPyq: true,
-                      );
-                    },
+          child: InkWell(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return ContributionBottomSheet(
+                    subjectName: widget.subjectName,
+                    specialThanks: widget.specialThanks,
+                    isPyq: true,
                   );
                 },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).colorScheme.error.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.favorite_rounded, color: Theme.of(context).colorScheme.error, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Want Special Thanks?",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).colorScheme.error.withOpacity(0.2)),
               ),
-              const SizedBox(height: 10),
-              const Center(child: AdBannerWidget(placementKey: 'pyq_screen')),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.favorite_rounded, color: Theme.of(context).colorScheme.error, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Want Special Thanks?",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

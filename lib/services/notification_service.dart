@@ -12,7 +12,7 @@ import '../features/events/data/events_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
-import 'ad_service.dart';
+import '../core/theme/app_theme.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -270,7 +270,7 @@ class NotificationService {
                     openAppSettings();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
+                    backgroundColor: context.c.dangerFill,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
@@ -285,7 +285,7 @@ class NotificationService {
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF64748B),
+                    foregroundColor: context.c.textMuted,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: const Text("Maybe Later", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -373,18 +373,6 @@ class NotificationService {
       // Always clear previous schedule to eliminate stale or repeating alarms
       await flutterLocalNotificationsPlugin.cancelAll();
 
-      // Check timetable ad pass status
-      final passStatus = await AdService.getTimetablePassStatus();
-      if (passStatus.isAdRequired && !passStatus.isUnlocked) {
-        final prefs = await SharedPreferences.getInstance();
-        final logs = prefs.getStringList('notification_debug_logs') ?? [];
-        logs.add("${DateTime.now().toString().split('.')[0]}|Timetable notification pass expired");
-        if (logs.length > 50) logs.removeAt(0);
-        await prefs.setStringList('notification_debug_logs', logs);
-        _isSchedulingTimetable = false;
-        return;
-      }
-
       if (!settings.isEnabled || entries.isEmpty) {
         final prefs = await SharedPreferences.getInstance();
         final logs = prefs.getStringList('notification_debug_logs') ?? [];
@@ -425,11 +413,9 @@ class NotificationService {
       final todayDate = DateTime.now();
 
       int scheduledCount = 0;
-      int skippedDueToExpiryCount = 0;
 
       debugPrint("════════════════════════════════════════════════════════════════");
       debugPrint("🔔 TIMETABLE NOTIFICATION SCHEDULER STARTED");
-      debugPrint("📅 Pass Status: ${passStatus.isAdRequired ? (passStatus.isUnlocked ? 'ACTIVE (Expires: ${passStatus.expiresAt})' : 'EXPIRED') : 'FREE MODE'}");
       debugPrint("⚙️ First Class: ${settings.firstClassReminder1Minutes}m | Subsequent: ${settings.subsequentReminder1Minutes}m | Vibration: ${settings.enableVibration}");
       debugPrint("────────────────────────────────────────────────────────────────");
 
@@ -547,57 +533,49 @@ class NotificationService {
               minute,
             );
 
-            // Only schedule if the alarm is in the future and strictly BEFORE pass expiry
-            bool isBeforePassExpiry = !passStatus.isAdRequired || 
-                (passStatus.expiresAt == null || scheduledDate.isBefore(passStatus.expiresAt!));
-
+            // Only schedule if the alarm is in the future
             if (scheduledDate.isAfter(now)) {
-              if (isBeforePassExpiry) {
-                final BigTextStyleInformation bigTextStyleInfo = BigTextStyleInformation(
-                  bigText,
-                  htmlFormatBigText: true,
-                  contentTitle: primaryContentTitle,
-                  htmlFormatContentTitle: true,
-                  summaryText: isFirstRealClass ? 'First Class' : 'Next Class',
-                  htmlFormatSummaryText: true,
-                  htmlFormatContent: true,
-                  htmlFormatTitle: true,
+              final BigTextStyleInformation bigTextStyleInfo = BigTextStyleInformation(
+                bigText,
+                htmlFormatBigText: true,
+                contentTitle: primaryContentTitle,
+                htmlFormatContentTitle: true,
+                summaryText: isFirstRealClass ? 'First Class' : 'Next Class',
+                htmlFormatSummaryText: true,
+                htmlFormatContent: true,
+                htmlFormatTitle: true,
+              );
+
+              final String channelId = settings.enableVibration ? 'timetable_channel_vibrating' : 'timetable_channel_silent';
+              final String channelName = settings.enableVibration ? 'Class Reminders' : 'Class Reminders (No Vibration)';
+
+              final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+                channelId,
+                channelName,
+                channelDescription: 'Notifications for classes',
+                importance: Importance.max,
+                priority: Priority.high,
+                ticker: 'Class Reminder',
+                color: const Color(0xFFC62828),
+                vibrationPattern: settings.enableVibration ? vibrationPattern : null,
+                enableVibration: settings.enableVibration,
+                styleInformation: bigTextStyleInfo,
+              );
+
+              int primaryId = ("${datePrefix}_${entry.startTime}_p1").hashCode.abs() % 1000000;
+              try {
+                await flutterLocalNotificationsPlugin.zonedSchedule(
+                  id: primaryId,
+                  title: primaryContentTitle,
+                  body: bodyText,
+                  scheduledDate: scheduledDate,
+                  notificationDetails: NotificationDetails(android: androidDetails),
+                  androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
                 );
-
-                final String channelId = settings.enableVibration ? 'timetable_channel_vibrating' : 'timetable_channel_silent';
-                final String channelName = settings.enableVibration ? 'Class Reminders' : 'Class Reminders (No Vibration)';
-
-                final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-                  channelId,
-                  channelName,
-                  channelDescription: 'Notifications for classes',
-                  importance: Importance.max,
-                  priority: Priority.high,
-                  ticker: 'Class Reminder',
-                  color: const Color(0xFFC62828),
-                  vibrationPattern: settings.enableVibration ? vibrationPattern : null,
-                  enableVibration: settings.enableVibration,
-                  styleInformation: bigTextStyleInfo,
-                );
-
-                int primaryId = ("${datePrefix}_${entry.startTime}_p1").hashCode.abs() % 1000000;
-                try {
-                  await flutterLocalNotificationsPlugin.zonedSchedule(
-                    id: primaryId,
-                    title: primaryContentTitle,
-                    body: bodyText,
-                    scheduledDate: scheduledDate,
-                    notificationDetails: NotificationDetails(android: androidDetails),
-                    androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-                  );
-                  scheduledCount++;
-                  debugPrint("  ⏰ [ALARM #$primaryId] -> $formattedSubject on $dayKey at ${scheduledDate.hour.toString().padLeft(2, '0')}:${scheduledDate.minute.toString().padLeft(2, '0')} (${entry.startTime} - ${entry.endTime}) [${entry.location}]");
-                } catch (e) {
-                  // Ignore single failure
-                }
-              } else {
-                skippedDueToExpiryCount++;
-                debugPrint("  ⛔ [SKIPPED - PASS EXPIRED] -> $formattedSubject ($dayKey ${scheduledDate.toString().split('.')[0]} is after pass expiry ${passStatus.expiresAt})");
+                scheduledCount++;
+                debugPrint("  ⏰ [ALARM #$primaryId] -> $formattedSubject on $dayKey at ${scheduledDate.hour.toString().padLeft(2, '0')}:${scheduledDate.minute.toString().padLeft(2, '0')} (${entry.startTime} - ${entry.endTime}) [${entry.location}]");
+              } catch (e) {
+                // Ignore single failure
               }
             }
           }
@@ -626,53 +604,48 @@ class NotificationService {
                 minute,
               );
 
-              bool isSecondBeforePassExpiry = !passStatus.isAdRequired || 
-                  (passStatus.expiresAt == null || secondScheduledDate.isBefore(passStatus.expiresAt!));
-
               if (secondScheduledDate.isAfter(now)) {
-                if (isSecondBeforePassExpiry) {
-                  final BigTextStyleInformation secondBigStyleInfo = BigTextStyleInformation(
-                    bigText,
-                    htmlFormatBigText: true,
-                    contentTitle: secondTitle,
-                    htmlFormatContentTitle: true,
-                    summaryText: 'Final Reminder',
-                    htmlFormatSummaryText: true,
-                    htmlFormatContent: true,
-                    htmlFormatTitle: true,
+                final BigTextStyleInformation secondBigStyleInfo = BigTextStyleInformation(
+                  bigText,
+                  htmlFormatBigText: true,
+                  contentTitle: secondTitle,
+                  htmlFormatContentTitle: true,
+                  summaryText: 'Final Reminder',
+                  htmlFormatSummaryText: true,
+                  htmlFormatContent: true,
+                  htmlFormatTitle: true,
+                );
+
+                final String channelId = settings.enableVibration ? 'timetable_channel_vibrating' : 'timetable_channel_silent';
+                final String channelName = settings.enableVibration ? 'Class Reminders' : 'Class Reminders (No Vibration)';
+
+                final AndroidNotificationDetails secondAndroidDetails = AndroidNotificationDetails(
+                  channelId,
+                  channelName,
+                  channelDescription: 'Notifications for classes',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                  ticker: 'Final Class Reminder',
+                  color: const Color(0xFFC62828),
+                  vibrationPattern: settings.enableVibration ? vibrationPattern : null,
+                  enableVibration: settings.enableVibration,
+                  styleInformation: secondBigStyleInfo,
+                );
+
+                int secondaryId = (("${datePrefix}_${entry.startTime}_p2").hashCode.abs() % 1000000) + 1000000;
+                try {
+                  await flutterLocalNotificationsPlugin.zonedSchedule(
+                    id: secondaryId,
+                    title: secondTitle,
+                    body: bodyText,
+                    scheduledDate: secondScheduledDate,
+                    notificationDetails: NotificationDetails(android: secondAndroidDetails),
+                    androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
                   );
-
-                  final String channelId = settings.enableVibration ? 'timetable_channel_vibrating' : 'timetable_channel_silent';
-                  final String channelName = settings.enableVibration ? 'Class Reminders' : 'Class Reminders (No Vibration)';
-
-                  final AndroidNotificationDetails secondAndroidDetails = AndroidNotificationDetails(
-                    channelId,
-                    channelName,
-                    channelDescription: 'Notifications for classes',
-                    importance: Importance.max,
-                    priority: Priority.high,
-                    ticker: 'Final Class Reminder',
-                    color: const Color(0xFFC62828),
-                    vibrationPattern: settings.enableVibration ? vibrationPattern : null,
-                    enableVibration: settings.enableVibration,
-                    styleInformation: secondBigStyleInfo,
-                  );
-
-                  int secondaryId = (("${datePrefix}_${entry.startTime}_p2").hashCode.abs() % 1000000) + 1000000;
-                  try {
-                    await flutterLocalNotificationsPlugin.zonedSchedule(
-                      id: secondaryId,
-                      title: secondTitle,
-                      body: bodyText,
-                      scheduledDate: secondScheduledDate,
-                      notificationDetails: NotificationDetails(android: secondAndroidDetails),
-                      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-                    );
-                    scheduledCount++;
-                    debugPrint("  ⚡ [FINAL ALARM #$secondaryId] -> $formattedSubject on $dayKey at ${secondScheduledDate.hour.toString().padLeft(2, '0')}:${secondScheduledDate.minute.toString().padLeft(2, '0')} (${secondOffset}m warning)");
-                  } catch (e) {
-                    // Ignore single failure
-                  }
+                  scheduledCount++;
+                  debugPrint("  ⚡ [FINAL ALARM #$secondaryId] -> $formattedSubject on $dayKey at ${secondScheduledDate.hour.toString().padLeft(2, '0')}:${secondScheduledDate.minute.toString().padLeft(2, '0')} (${secondOffset}m warning)");
+                } catch (e) {
+                  // Ignore single failure
                 }
               }
             }
@@ -680,40 +653,14 @@ class NotificationService {
         }
       }
 
-      // Schedule single expiration alert exactly when the pass expires
-      if (passStatus.isAdRequired && passStatus.expiresAt != null && passStatus.expiresAt!.isAfter(DateTime.now())) {
-        final expireScheduledDate = tz.TZDateTime.from(passStatus.expiresAt!, tz.local);
-        const AndroidNotificationDetails expiryDetails = AndroidNotificationDetails(
-          'timetable_pass_expiry',
-          'Pass Status Alerts',
-          channelDescription: 'Alerts when your timetable pass expires',
-          importance: Importance.high,
-          priority: Priority.high,
-          ticker: 'Pass Expired',
-          color: Color(0xFFC62828),
-        );
-
-        try {
-          await flutterLocalNotificationsPlugin.zonedSchedule(
-            id: 999999,
-            title: '⏳ Class Alerts Paused',
-            body: 'Your timetable pass has expired. Tap to watch a quick video & keep class alerts active!',
-            scheduledDate: expireScheduledDate,
-            notificationDetails: const NotificationDetails(android: expiryDetails),
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          );
-          debugPrint("  ⏳ [PASS EXPIRY ALERT #999999] -> Scheduled for $expireScheduledDate");
-        } catch (_) {}
-      }
-
       debugPrint("────────────────────────────────────────────────────────────────");
-      debugPrint("✅ TIMETABLE SCHEDULER FINISHED: $scheduledCount alarms scheduled, $skippedDueToExpiryCount skipped (expired).");
+      debugPrint("✅ TIMETABLE SCHEDULER FINISHED: $scheduledCount alarms scheduled.");
       debugPrint("════════════════════════════════════════════════════════════════");
 
       // Save debug log entry
       final prefs = await SharedPreferences.getInstance();
       final logs = prefs.getStringList('notification_debug_logs') ?? [];
-      final logEntry = "${DateTime.now().toString().split('.')[0]}|Scheduled $scheduledCount alarms (Skipped $skippedDueToExpiryCount expired)";
+      final logEntry = "${DateTime.now().toString().split('.')[0]}|Scheduled $scheduledCount alarms";
       logs.add(logEntry);
       if (logs.length > 50) logs.removeAt(0);
       await prefs.setStringList('notification_debug_logs', logs);

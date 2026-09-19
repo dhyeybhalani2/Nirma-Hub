@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,10 +8,8 @@ import 'package:flutter/cupertino.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'widgets/skeleton_loaders.dart';
 import 'services/rating_service.dart';
-import 'services/ad_service.dart';
-import 'widgets/ad_banner_widget.dart';
-import 'widgets/ad_native_widget.dart';
 import 'help_center_screen.dart';
+import 'core/theme/app_theme.dart';
 
 class SgpaCalculatorScreen extends ConsumerStatefulWidget {
   const SgpaCalculatorScreen({super.key});
@@ -28,6 +28,15 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
   int _selectedSemester = 1;
   late TabController _tabController;
 
+  // --- Estimated CGPA ---
+  /// Admin-defined semester setup rows for this user's academic year.
+  List<Map<String, dynamic>> _cgpaConfigs = [];
+  /// semester_number -> SGPA the student typed in for a completed semester.
+  final Map<int, double> _pastSgpa = {};
+  double _estimatedCgpa = 0.0;
+  /// How many semesters actually went into [_estimatedCgpa].
+  int _cgpaSemesterCount = 0;
+
   final Map<int, int> gradeToPercent = {
     10: 91, 9: 81, 8: 71, 7: 61, 6: 51, 5: 41, 4: 31, 3: 21, 2: 11, 1: 1
   };
@@ -35,7 +44,6 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
   @override
   void initState() {
     super.initState();
-    AdService().preloadRewardedAd();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -118,6 +126,44 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
         // We continue without marks so subjects still show up!
       }
       
+      // 3. Fetch the admin's CGPA semester setup for this academic year
+      List<Map<String, dynamic>> cgpaConfigs = [];
+      Map<int, double> pastSgpaMap = {};
+
+      try {
+        final cgpaResponse = await supabase
+            .from('cgpa_configs')
+            .select('academic_year, applies_to_semester, current_semester, past_semesters, is_enabled')
+            .eq('academic_year', userYear)
+            .eq('is_enabled', true);
+
+        for (var c in cgpaResponse as List<dynamic>) {
+          cgpaConfigs.add({
+            'academic_year': c['academic_year'],
+            'applies_to_semester': (c['applies_to_semester'] as num?)?.toInt() ?? 0,
+            'current_semester': (c['current_semester'] as num?)?.toInt() ?? 1,
+            'past_semesters': c['past_semesters'] is List
+                ? List<dynamic>.from(c['past_semesters'] as List)
+                : <dynamic>[],
+          });
+        }
+
+        // 4. Fetch the SGPAs this user already saved for past semesters
+        final pastResponse = await supabase
+            .from('user_past_sgpa')
+            .select('semester_number, sgpa')
+            .eq('user_id', userProfile.id);
+
+        for (var row in pastResponse as List<dynamic>) {
+          final semNo = (row['semester_number'] as num?)?.toInt();
+          final value = (row['sgpa'] as num?)?.toDouble();
+          if (semNo != null && value != null) pastSgpaMap[semNo] = value;
+        }
+      } catch (cgpaError) {
+        debugPrint("Could not fetch CGPA setup: $cgpaError");
+        // Not fatal - the screen still works as a plain SGPA calculator.
+      }
+
       // Initialize missing marks map entries
       for (var sub in validSubjects) {
         if (!marksMap.containsKey(sub['subject_id'])) {
@@ -133,6 +179,10 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
         _userYear = userYear;
         _allSgpaSubjects = validSubjects;
         _userMarks = marksMap;
+        _cgpaConfigs = cgpaConfigs;
+        _pastSgpa
+          ..clear()
+          ..addAll(pastSgpaMap);
         _isLoading = false;
         _calculateOverallSgpa();
       });
@@ -148,12 +198,27 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
     return _allSgpaSubjects.where((s) => s['semester'] == 0 || s['semester'] == _selectedSemester).toList();
   }
 
+  /// The semester setup that applies right now. 1st year has one row per
+  /// SGPA tab; every other year uses the `applies_to_semester = 0` row.
+  Map<String, dynamic>? get _activeCgpaConfig {
+    if (_cgpaConfigs.isEmpty) return null;
+
+    if (_userYear == '1st') {
+      for (final c in _cgpaConfigs) {
+        if (c['applies_to_semester'] == _selectedSemester) return c;
+      }
+    }
+    for (final c in _cgpaConfigs) {
+      if (c['applies_to_semester'] == 0) return c;
+    }
+    return _cgpaConfigs.first;
+  }
+
   void _calculateOverallSgpa() {
     final visible = _visibleSubjects;
-    if (visible.isEmpty) return;
     int totalGrade = 0;
     int subjectsWithGrade = 0;
-    
+
     for (var sub in visible) {
       final marks = _userMarks[sub['subject_id']];
       if (marks != null && marks['target_grade'] != null && (marks['target_grade'] as num) > 0) {
@@ -161,87 +226,153 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
         subjectsWithGrade++;
       }
     }
-    
+
     setState(() {
       _estimatedSgpa = subjectsWithGrade > 0 ? (totalGrade / subjectsWithGrade) : 0.0;
+      _recalculateCgpa();
     });
+  }
+
+  /// CGPA = mean of every past-semester SGPA the student entered plus the live
+  /// estimated SGPA of the current semester. Semesters left blank are excluded
+  /// from both the sum and the divisor.
+  void _recalculateCgpa() {
+    final config = _activeCgpaConfig;
+    if (config == null) {
+      _estimatedCgpa = 0.0;
+      _cgpaSemesterCount = 0;
+      return;
+    }
+
+    double total = 0.0;
+    int count = 0;
+
+    for (final entry in (config['past_semesters'] as List<dynamic>)) {
+      if (entry is! Map) continue;
+      final semNo = (entry['number'] as num?)?.toInt();
+      if (semNo == null) continue;
+      final value = _pastSgpa[semNo];
+      if (value != null && value > 0) {
+        total += value;
+        count++;
+      }
+    }
+
+    if (_estimatedSgpa > 0) {
+      total += _estimatedSgpa;
+      count++;
+    }
+
+    _estimatedCgpa = count > 0 ? total / count : 0.0;
+    _cgpaSemesterCount = count;
+  }
+
+  /// Stores one past-semester SGPA. Pass null to clear it.
+  Future<void> _savePastSgpa(int semesterNumber, double? value) async {
+    if (mounted) {
+      setState(() {
+        if (value == null) {
+          _pastSgpa.remove(semesterNumber);
+        } else {
+          _pastSgpa[semesterNumber] = value;
+        }
+        _recalculateCgpa();
+      });
+    }
+
+    final userProfile = ref.read(authNotifierProvider).value;
+    if (userProfile == null) return;
+
+    final supabase = Supabase.instance.client;
+    try {
+      if (value == null) {
+        await supabase
+            .from('user_past_sgpa')
+            .delete()
+            .eq('user_id', userProfile.id)
+            .eq('semester_number', semesterNumber);
+      } else {
+        await supabase.from('user_past_sgpa').upsert({
+          'user_id': userProfile.id,
+          'semester_number': semesterNumber,
+          'sgpa': value,
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'user_id, semester_number');
+      }
+    } catch (e) {
+      debugPrint("Could not save past SGPA for semester $semesterNumber: $e");
+    }
   }
 
   Future<void> _calculateSubject(String subjectId, Map<String, dynamic> methodData, Map<String, num> inputs, int targetGrade) async {
     HapticFeedback.lightImpact();
     
-    // Process calculation click with strict Anti-Bypass Protection (shows ad FIRST if 10th click)
-    await AdService().processSgpaCalculation(
-      context: context,
-      onProceed: () async {
-        double internal = 0;
-        List<dynamic> components = methodData['components'];
-        
-        for (var comp in components) {
-          final String compName = comp['name'];
-          final num maxMarks = comp['max_marks'];
-          final num weight = comp['weight'];
-          
-          final num userVal = inputs[compName] ?? 0;
-          internal += (userVal / maxMarks) * weight;
+    double internal = 0;
+    List<dynamic> components = methodData['components'];
+    
+    for (var comp in components) {
+      final String compName = comp['name'];
+      final num maxMarks = comp['max_marks'];
+      final num weight = comp['weight'];
+      
+      final num userVal = inputs[compName] ?? 0;
+      internal += (userVal / maxMarks) * weight;
+    }
+    
+    int reqPercent = gradeToPercent[targetGrade] ?? 0;
+    double requiredSee = (reqPercent - internal) * 2;
+    
+    if (requiredSee < 0) requiredSee = 0;
+    
+    bool hasSee = methodData['has_see'] == true;
+    if (!hasSee) {
+      // Auto-calculate grade from internal marks
+      if (internal >= 91) targetGrade = 10;
+      else if (internal >= 81) targetGrade = 9;
+      else if (internal >= 71) targetGrade = 8;
+      else if (internal >= 61) targetGrade = 7;
+      else if (internal >= 51) targetGrade = 6;
+      else if (internal >= 41) targetGrade = 5;
+      else if (internal >= 31) targetGrade = 4;
+      else if (internal >= 21) targetGrade = 3;
+      else if (internal >= 11) targetGrade = 2;
+      else if (internal >= 1) targetGrade = 1;
+      else targetGrade = 0;
+    }
+    
+    int currentCount = (_userMarks[subjectId]?['calculation_count'] as num?)?.toInt() ?? 0;
+    int newCount = currentCount + 1;
+    
+    if (mounted) {
+      setState(() {
+        if (!_userMarks.containsKey(subjectId)) {
+          _userMarks[subjectId] = {};
         }
-        
-        int reqPercent = gradeToPercent[targetGrade] ?? 0;
-        double requiredSee = (reqPercent - internal) * 2;
-        
-        if (requiredSee < 0) requiredSee = 0;
-        
-        bool hasSee = methodData['has_see'] == true;
-        if (!hasSee) {
-          // Auto-calculate grade from internal marks
-          if (internal >= 91) targetGrade = 10;
-          else if (internal >= 81) targetGrade = 9;
-          else if (internal >= 71) targetGrade = 8;
-          else if (internal >= 61) targetGrade = 7;
-          else if (internal >= 51) targetGrade = 6;
-          else if (internal >= 41) targetGrade = 5;
-          else if (internal >= 31) targetGrade = 4;
-          else if (internal >= 21) targetGrade = 3;
-          else if (internal >= 11) targetGrade = 2;
-          else if (internal >= 1) targetGrade = 1;
-          else targetGrade = 0;
-        }
-        
-        int currentCount = (_userMarks[subjectId]?['calculation_count'] as num?)?.toInt() ?? 0;
-        int newCount = currentCount + 1;
-        
-        if (mounted) {
-          setState(() {
-            if (!_userMarks.containsKey(subjectId)) {
-              _userMarks[subjectId] = {};
-            }
-            _userMarks[subjectId]!['marks_data'] = inputs;
-            _userMarks[subjectId]!['target_grade'] = targetGrade;
-            _userMarks[subjectId]!['required_see'] = hasSee ? requiredSee : -1.0; 
-            _userMarks[subjectId]!['total_internal'] = internal;
-            _userMarks[subjectId]!['calculation_count'] = newCount;
-            _calculateOverallSgpa();
-          });
-        }
-        
-        // Save to Supabase
-        final userProfile = ref.read(authNotifierProvider).value;
-        if (userProfile != null) {
-          final supabase = Supabase.instance.client;
-          await supabase.from('sgpa_user_marks').upsert({
-            'user_id': userProfile.id,
-            'subject_id': subjectId,
-            'marks_data': inputs,
-            'target_grade': targetGrade,
-            'calculation_count': newCount,
-            'updated_at': DateTime.now().toIso8601String()
-          }, onConflict: 'user_id, subject_id');
-        }
+        _userMarks[subjectId]!['marks_data'] = inputs;
+        _userMarks[subjectId]!['target_grade'] = targetGrade;
+        _userMarks[subjectId]!['required_see'] = hasSee ? requiredSee : -1.0; 
+        _userMarks[subjectId]!['total_internal'] = internal;
+        _userMarks[subjectId]!['calculation_count'] = newCount;
+        _calculateOverallSgpa();
+      });
+    }
+    
+    // Save to Supabase
+    final userProfile = ref.read(authNotifierProvider).value;
+    if (userProfile != null) {
+      final supabase = Supabase.instance.client;
+      await supabase.from('sgpa_user_marks').upsert({
+        'user_id': userProfile.id,
+        'subject_id': subjectId,
+        'marks_data': inputs,
+        'target_grade': targetGrade,
+        'calculation_count': newCount,
+        'updated_at': DateTime.now().toIso8601String()
+      }, onConflict: 'user_id, subject_id');
+    }
 
-        // Trigger Google Play In-App Review check (at 15 clicks, then every 30 clicks: 45, 75, 105...)
-        RatingService().onSgpaCalculationDone();
-      },
-    );
+    // Trigger Google Play In-App Review check (at 15 clicks, then every 30 clicks: 45, 75, 105...)
+    RatingService().onSgpaCalculationDone();
   }
 
   void _showDisclaimerDialog(BuildContext context) {
@@ -280,10 +411,10 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                    color: context.c.accentFill.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(CupertinoIcons.info_circle_fill, color: Color(0xFFC62828), size: 20),
+                  child: Icon(CupertinoIcons.info_circle_fill, color: context.c.accent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -375,12 +506,12 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Keeping Nirma Hub Free & Alive",
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFFD97706),
+                            color: context.c.pick(const Color(0xFFD97706), const Color(0xFFFBBF24)),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -459,13 +590,6 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      bottomNavigationBar: SafeArea(
-        child: Container(
-          color: Theme.of(context).colorScheme.surface,
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: const AdBannerWidget(placementKey: 'sgpa_calculator'),
-        ),
-      ),
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
@@ -556,8 +680,8 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
                   if (_userYear == '1st') ...[
                     Container(
                       height: 48,
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: context.c.border, width: 1)),
                       ),
                       child: TabBar(
                         controller: _tabController,
@@ -567,11 +691,11 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
                         isScrollable: false,
                         splashFactory: NoSplash.splashFactory,
                         indicatorSize: TabBarIndicatorSize.label,
-                        labelColor: const Color(0xFFC62828),
-                        unselectedLabelColor: const Color(0xFF64748B),
+                        labelColor: context.c.accent,
+                        unselectedLabelColor: context.c.textMuted,
                         labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, fontFamily: 'Manrope'),
                         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFamily: 'Manrope'),
-                        indicatorColor: const Color(0xFFC62828),
+                        indicatorColor: context.c.accent,
                         indicatorWeight: 3,
                         dividerColor: Colors.transparent,
                         overlayColor: WidgetStateProperty.all(Colors.transparent),
@@ -587,12 +711,14 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
+                    color: context.c.hero,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFF1E293B)),
+                    border: Border.all(color: context.c.heroBorder),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFC62828).withValues(alpha: 0.15),
+                        color: context.c.isDark
+                            ? Colors.black.withValues(alpha: 0.5)
+                            : const Color(0xFFC62828).withValues(alpha: 0.15),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -659,12 +785,27 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
+                // Estimated CGPA (only when the admin configured past semesters)
+                if (_activeCgpaConfig != null &&
+                    (_activeCgpaConfig!['past_semesters'] as List).isNotEmpty) ...[
+                  _CgpaCard(
+                    key: ValueKey(
+                      'cgpa-${_activeCgpaConfig!['academic_year']}-${_activeCgpaConfig!['applies_to_semester']}',
+                    ),
+                    config: _activeCgpaConfig!,
+                    pastSgpa: _pastSgpa,
+                    estimatedSgpa: _estimatedSgpa,
+                    estimatedCgpa: _estimatedCgpa,
+                    semesterCount: _cgpaSemesterCount,
+                    onChanged: _savePastSgpa,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
                 // Subject Cards
-                ..._visibleSubjects.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final sub = entry.value;
-                  final card = _SubjectCalcCard(
+                ..._visibleSubjects.map((sub) {
+                  return _SubjectCalcCard(
                     key: ValueKey(sub['subject_id']),
                     subjectData: sub,
                     initialMarks: _userMarks[sub['subject_id']]?['marks_data'] ?? <String, dynamic>{},
@@ -675,25 +816,6 @@ class _SgpaCalculatorScreenState extends ConsumerState<SgpaCalculatorScreen> wit
                       _calculateSubject(sub['subject_id'], sub, inputs, targetGrade);
                     },
                   );
-
-                  // Show Native Ad dynamically based on remote/cached interval
-                  final int nativeInterval = AdService().sgpaNativeInterval;
-                  if (nativeInterval > 0 &&
-                      (index + 1) % nativeInterval == 0 &&
-                      index != _visibleSubjects.length - 1) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        card,
-                        const AdNativeCard(
-                          placementKey: 'sgpa_in_between_subjects',
-                          isMediumTemplate: false,
-                          margin: EdgeInsets.only(bottom: 16),
-                        ),
-                      ],
-                    );
-                  }
-                  return card;
                 }),
                 const SizedBox(height: 32),
               ],
@@ -741,7 +863,9 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
     for (var comp in components) {
       final name = comp['name'] as String;
       final initialVal = widget.initialMarks[name];
-      _controllers[name] = TextEditingController(text: initialVal != null ? initialVal.toString() : '');
+      _controllers[name] = TextEditingController(
+        text: initialVal != null ? (initialVal is num ? initialVal.toInt().toString() : initialVal.toString()) : '',
+      );
       _focusNodes[name] = FocusNode()..addListener(() => setState(() {}));
     }
   }
@@ -769,7 +893,7 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
     for (var comp in components) {
       final name = comp['name'] as String;
       final text = _controllers[name]?.text ?? '0';
-      inputs[name] = num.tryParse(text) ?? 0;
+      inputs[name] = int.tryParse(text) ?? 0;
     }
     
     int targetGrade = int.tryParse(_targetController.text) ?? 0;
@@ -800,7 +924,7 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
       const Color(0xFFF57C00), const Color(0xFFFBC02D), const Color(0xFF0097A7),
       const Color(0xFFC2185B), const Color(0xFF3F51B5), const Color(0xFFD84315)
     ];
-    return colors[hash % colors.length];
+    return context.c.tint(colors[hash % colors.length]);
   }
 
   Widget _buildResultBox() {
@@ -813,11 +937,11 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3E8FF), 
+          color: context.c.purpleSoft, 
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFD8B4FE), width: 1.5),
+          border: Border.all(color: context.c.purpleBorder, width: 1.5),
           boxShadow: [
-             BoxShadow(color: const Color(0xFFD8B4FE).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+             BoxShadow(color: context.c.purpleBorder.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
@@ -825,13 +949,13 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
             Text(
               "Total: ${widget.totalInternal?.toStringAsFixed(1) ?? '0.0'} / 100",
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF6B21A8), fontWeight: FontWeight.w800, fontSize: 16, fontFamily: 'Manrope'),
+              style: TextStyle(color: context.c.purple, fontWeight: FontWeight.w800, fontSize: 16, fontFamily: 'Manrope'),
             ),
             const SizedBox(height: 4),
             Text(
               "Grade: ${widget.initialTargetGrade}",
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF6B21A8), fontWeight: FontWeight.w800, fontSize: 16, fontFamily: 'Manrope'),
+              style: TextStyle(color: context.c.purple, fontWeight: FontWeight.w800, fontSize: 16, fontFamily: 'Manrope'),
             ),
           ],
         ),
@@ -844,9 +968,9 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
       int upperRange = requiredMarks + 19;
       if (upperRange > 100) upperRange = 100;
 
-      Color boxColor = isAchieved ? const Color(0xFF10B981) : (isImpossible ? const Color(0xFFEF4444) : const Color(0xFFF59E0B));
-      Color bgColor = isAchieved ? const Color(0xFFD1FAE5) : (isImpossible ? const Color(0xFFFEE2E2) : const Color(0xFFFEF3C7));
-      Color borderColor = isAchieved ? const Color(0xFFA7F3D0) : (isImpossible ? const Color(0xFFFECACA) : const Color(0xFFFDE68A));
+      Color boxColor = isAchieved ? context.c.success : (isImpossible ? context.c.danger : context.c.warning);
+      Color bgColor = isAchieved ? context.c.successSoft : (isImpossible ? context.c.dangerSoft : context.c.warningSoft);
+      Color borderColor = isAchieved ? context.c.successBorder : (isImpossible ? context.c.dangerBorder : context.c.warningBorder);
       
       Widget messageWidget;
       if (isAchieved) {
@@ -865,7 +989,7 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
         messageWidget = RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w700, fontSize: 15, fontFamily: 'Manrope'),
+            style: TextStyle(color: context.c.warningText, fontWeight: FontWeight.w700, fontSize: 15, fontFamily: 'Manrope'),
             children: [
               const TextSpan(text: "Between "),
               TextSpan(text: "$requiredMarks", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
@@ -935,7 +1059,7 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
+            color: context.c.shadow.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -994,12 +1118,12 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
                     width: 110,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: context.c.fill,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _focusNodes[name]?.hasFocus == true 
-                            ? const Color(0xFFC62828) 
-                            : const Color(0xFFE2E8F0), 
+                            ? context.c.accent 
+                            : context.c.border, 
                         width: _focusNodes[name]?.hasFocus == true ? 1.5 : 1.0,
                       ),
                     ),
@@ -1008,24 +1132,24 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
                         Expanded(
                           child: TextField(
                             focusNode: _focusNodes[name],
-                            cursorColor: const Color(0xFFC62828),
+                            cursorColor: context.c.accent,
                             controller: _controllers[name],
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.right,
                             textAlignVertical: TextAlignVertical.center,
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.c.text),
                             decoration: const InputDecoration(
                               border: InputBorder.none,
                               isDense: true,
                               contentPadding: EdgeInsets.zero,
                             ),
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,1}')),
+                              FilteringTextInputFormatter.digitsOnly,
                             ],
                             onChanged: (val) {
-                              num parsed = num.tryParse(val) ?? 0;
-                              if (parsed > maxMarks) {
-                                _controllers[name]!.text = maxMarks.toString();
+                              int parsed = int.tryParse(val) ?? 0;
+                              if (parsed > maxMarks.toInt()) {
+                                _controllers[name]!.text = maxMarks.toInt().toString();
                                 _controllers[name]!.selection = TextSelection.fromPosition(
                                   TextPosition(offset: _controllers[name]!.text.length),
                                 );
@@ -1035,7 +1159,7 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
                         ),
                         Padding(
                           padding: const EdgeInsets.only(right: 12.0),
-                          child: Text("/$maxMarks", style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w700)),
+                          child: Text("/${maxMarks.toInt()}", style: TextStyle(color: context.c.textFaint, fontSize: 13, fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
@@ -1062,12 +1186,12 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
                   width: 110,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: context.c.fill,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _targetFocusNode.hasFocus 
-                          ? const Color(0xFFC62828) 
-                          : const Color(0xFFCBD5E1), 
+                          ? context.c.accent 
+                          : context.c.borderStrong, 
                       width: _targetFocusNode.hasFocus ? 1.5 : 1.0,
                     ),
                   ),
@@ -1076,17 +1200,21 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
                       Expanded(
                         child: TextField(
                           focusNode: _targetFocusNode,
-                          cursorColor: const Color(0xFFC62828),
+                          cursorColor: context.c.accent,
                           controller: _targetController,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.right,
                           textAlignVertical: TextAlignVertical.center,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF0F172A)),
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.c.text),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
                           ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(2),
+                          ],
                           onChanged: (val) {
                             int parsed = int.tryParse(val) ?? 0;
                             if (parsed > 10) {
@@ -1098,9 +1226,9 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
                           },
                         ),
                       ),
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(right: 12.0),
-                        child: Text("/10", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w700)),
+                        child: Text("/10", style: TextStyle(color: context.c.textFaint, fontSize: 13, fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),
@@ -1126,7 +1254,7 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
             child: ElevatedButton(
               onPressed: _handleCalculate,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F172A),
+                backgroundColor: context.c.hero,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
@@ -1137,6 +1265,370 @@ class _SubjectCalcCardState extends State<_SubjectCalcCard> {
         ],
       ),
     ),
+    );
+  }
+}
+
+
+/// Lets the student type the SGPA of each completed semester (the list of
+/// semesters comes from `cgpa_configs` in Supabase) and shows the resulting
+/// estimated CGPA together with the live SGPA of the running semester.
+class _CgpaCard extends StatefulWidget {
+  final Map<String, dynamic> config;
+  final Map<int, double> pastSgpa;
+  final double estimatedSgpa;
+  final double estimatedCgpa;
+  final int semesterCount;
+  final Future<void> Function(int semesterNumber, double? sgpa) onChanged;
+
+  const _CgpaCard({
+    super.key,
+    required this.config,
+    required this.pastSgpa,
+    required this.estimatedSgpa,
+    required this.estimatedCgpa,
+    required this.semesterCount,
+    required this.onChanged,
+  });
+
+  @override
+  State<_CgpaCard> createState() => _CgpaCardState();
+}
+
+class _CgpaCardState extends State<_CgpaCard> {
+  Color get _accent => context.c.pick(const Color(0xFF4F46E5), const Color(0xFFA5B4FC));
+
+  final Map<int, TextEditingController> _controllers = {};
+  final Map<int, FocusNode> _focusNodes = {};
+  final Map<int, Timer> _debouncers = {};
+
+  List<Map<String, dynamic>> get _pastSemesters {
+    final raw = widget.config['past_semesters'] as List<dynamic>;
+    final out = <Map<String, dynamic>>[];
+    for (final e in raw) {
+      if (e is! Map) continue;
+      final number = (e['number'] as num?)?.toInt();
+      if (number == null) continue;
+      out.add({
+        'number': number,
+        'label': (e['label'] as String?)?.trim().isNotEmpty == true
+            ? e['label'] as String
+            : 'Semester $number',
+      });
+    }
+    out.sort((a, b) => (a['number'] as int).compareTo(b['number'] as int));
+    return out;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    for (final sem in _pastSemesters) {
+      final number = sem['number'] as int;
+      final saved = widget.pastSgpa[number];
+      _controllers[number] = TextEditingController(
+        text: saved != null ? _trim(saved) : '',
+      );
+      _focusNodes[number] = FocusNode()..addListener(() => setState(() {}));
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final t in _debouncers.values) {
+      t.cancel();
+    }
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    for (final f in _focusNodes.values) {
+      f.dispose();
+    }
+    super.dispose();
+  }
+
+  /// 8.50 -> "8.5", 9.00 -> "9"
+  static String _trim(double value) {
+    final text = value.toStringAsFixed(2);
+    return text.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  void _onFieldChanged(int semesterNumber, String raw) {
+    final controller = _controllers[semesterNumber]!;
+
+    // Clamp to the 0-10 scale while typing.
+    final parsed = double.tryParse(raw);
+    if (parsed != null && parsed > 10) {
+      controller.text = '10';
+      controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: controller.text.length),
+      );
+      raw = '10';
+    }
+
+    _debouncers[semesterNumber]?.cancel();
+    _debouncers[semesterNumber] = Timer(const Duration(milliseconds: 600), () {
+      final value = double.tryParse(controller.text.trim());
+      widget.onChanged(
+        semesterNumber,
+        (value == null || value <= 0) ? null : value,
+      );
+    });
+  }
+
+  Color _gradeColor(double value) {
+    if (value >= 8.5) return context.c.success;
+    if (value >= 6.5) return context.c.warning;
+    return context.c.danger;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currentSemester = (widget.config['current_semester'] as num?)?.toInt() ?? 0;
+    final cgpa = widget.estimatedCgpa;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: context.c.shadow.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ---- Header ----
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _accent.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _accent.withValues(alpha: 0.15)),
+                  ),
+                  child: Icon(CupertinoIcons.chart_bar_alt_fill, color: _accent, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Estimated CGPA",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
+                          fontFamily: 'Manrope',
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.semesterCount > 0
+                            ? "Across ${widget.semesterCount} semester${widget.semesterCount == 1 ? '' : 's'}"
+                            : "Enter your past semester SGPA",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  cgpa > 0 ? cgpa.toStringAsFixed(2) : "--",
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Manrope',
+                    letterSpacing: -1,
+                    color: cgpa > 0 ? _gradeColor(cgpa) : theme.colorScheme.outline,
+                  ),
+                ),
+              ],
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Divider(color: theme.colorScheme.outlineVariant, thickness: 1.0),
+            ),
+
+            // ---- Past semesters the student fills in ----
+            ..._pastSemesters.map((sem) {
+              final number = sem['number'] as int;
+              final hasFocus = _focusNodes[number]?.hasFocus == true;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "${sem['label']} SGPA",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 110,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: context.c.fill,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: hasFocus ? _accent : context.c.border,
+                          width: hasFocus ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              focusNode: _focusNodes[number],
+                              controller: _controllers[number],
+                              cursorColor: _accent,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              textAlign: TextAlign.right,
+                              textAlignVertical: TextAlignVertical.center,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: context.c.text,
+                              ),
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                hintText: '0.00',
+                                hintStyle: TextStyle(
+                                  color: context.c.borderStrong,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}\.?\d{0,2}')),
+                              ],
+                              onChanged: (val) => _onFieldChanged(number, val),
+                              onEditingComplete: () {
+                                _debouncers[number]?.cancel();
+                                final value = double.tryParse(_controllers[number]!.text.trim());
+                                widget.onChanged(
+                                  number,
+                                  (value == null || value <= 0) ? null : value,
+                                );
+                                FocusScope.of(context).unfocus();
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(right: 12.0),
+                            child: Text(
+                              "/10",
+                              style: TextStyle(
+                                color: context.c.textFaint,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+
+            // ---- The running semester, taken from the calculator above ----
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      currentSemester > 0
+                          ? "Semester $currentSemester SGPA (estimated)"
+                          : "Current semester SGPA (estimated)",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 110,
+                    height: 46,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _accent.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _accent.withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      widget.estimatedSgpa > 0
+                          ? "${widget.estimatedSgpa.toStringAsFixed(2)} /10"
+                          : "-- /10",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: _accent,
+                        fontFamily: 'Manrope',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              child: Text(
+                widget.semesterCount > 0
+                    ? "CGPA is the average of the ${widget.semesterCount} semester${widget.semesterCount == 1 ? '' : 's'} counted above. Semesters left blank are skipped."
+                    : "Fill in your past semester SGPA and set targets above to see your estimated CGPA.",
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
