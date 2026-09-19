@@ -78,7 +78,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
                 ),
               ],
             ),
-            backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
+            backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF2C2C31)),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -263,7 +263,7 @@ class _ProvideFeedbackScreenState extends ConsumerState<ProvideFeedbackScreen> {
               // Submit Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
+                  backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF2C2C31)),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,

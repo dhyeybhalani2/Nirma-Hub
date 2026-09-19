@@ -132,7 +132,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
+                  color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF2C2C31)),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -543,7 +543,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen> {
                                           ),
                                         ],
                                       ),
-                                      backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
+                                      backgroundColor: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF2C2C31)),
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       margin: const EdgeInsets.all(16),

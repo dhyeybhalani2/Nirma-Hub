@@ -35,7 +35,7 @@
 - **Academic calendar & announcements** — university circulars, exam dates, fests and holiday countdowns.
 
 ### Experience
-- **Light & dark themes** — a warm-graphite dark mode with a sun/moon switch in the home app bar. Your choice is remembered; until you pick one, the app follows the system setting.
+- **Light & dark themes** — a true-black dark mode with a sun/moon switch in the home app bar. Your choice is remembered; until you pick one, the app follows the system setting.
 - **Built for a phone in a lecture hall** — skeleton loaders, haptics, offline PDF cache and predictive-back navigation.
 
 ---

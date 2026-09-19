@@ -330,7 +330,7 @@ class _UnifiedAuthPageState extends ConsumerState<UnifiedAuthPage> with SingleTi
 
   // Colors
   Color get nirmaNavy => context.c.pick(const Color(0xFF1A2B48), const Color(0xFFECECF0)); // text / icons
-  Color get navyFill => context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)); // solid buttons
+  Color get navyFill => context.c.pick(const Color(0xFF1A2B48), const Color(0xFF2C2C31)); // solid buttons
   Color get nirmaRed => context.c.accent; // Vibrant Hub Red
   Color get redFill => context.c.accentFill;
   Color get textDark => context.c.text;

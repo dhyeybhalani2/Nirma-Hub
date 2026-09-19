@@ -1632,7 +1632,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)),
+                  color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF2C2C31)),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -2125,7 +2125,7 @@ class _ProfileSkeletonState extends State<_ProfileSkeleton> with SingleTickerPro
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF343436)), // nirmaNavy
+                    color: context.c.pick(const Color(0xFF1A2B48), const Color(0xFF2C2C31)), // nirmaNavy
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Row(
