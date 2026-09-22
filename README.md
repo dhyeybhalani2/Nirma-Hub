@@ -20,6 +20,15 @@
 
 ---
 
+## 👥 Team
+
+- **Dhyey Bhalani** — UI/UX, Frontend Development, Project Coordination, Marketing & Play Store Deployment
+- **Harshil Dhameliya** — UI/UX, Frontend Development, Agile Project Execution, Content Management & Testing
+- **Monil Mangukiya** — UI/UX, Academic Resources & Content Management, Structure Design & Testing
+- **Dhruv Bhalala** — Backend Development, Database & Authentication, Cloud Architecture, API Integration & Admin Panel Development
+
+---
+
 ## ✨ Features
 
 ### Academics
